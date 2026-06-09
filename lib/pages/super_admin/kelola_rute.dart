@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:litera/models/thematic_route.dart';
-import '../../services/thematic_service.dart'; // Sesuaikan penamaan file service kamu
-import 'tambah_rute.dart'; // Import halaman tambah rute
+import '../../services/thematic_service.dart'; 
+import 'tambah_rute.dart'; 
+import 'kelola_detail_rute.dart'; 
+
+import '../../services/route_detail_service.dart'; 
+import 'package:litera/models/route_detail.dart'; 
 
 class KelolaRutePage extends StatefulWidget {
   const KelolaRutePage({super.key});
@@ -12,8 +16,13 @@ class KelolaRutePage extends StatefulWidget {
 
 class _KelolaRutePageState extends State<KelolaRutePage> {
   final ThematicRouteService _routeService = ThematicRouteService();
+  // 1. TAMBAHKAN inisialisasi service untuk route detail
+  final RouteDetailService _routeDetailService = RouteDetailService();
   
   List<ThematicRouteModel> _allRoutes = [];
+  // 2. TAMBAHKAN penampung untuk data route detail
+  List<RouteDetailModel> _allRouteDetails = []; 
+  
   bool _isLoading = true;
 
   @override
@@ -22,14 +31,26 @@ class _KelolaRutePageState extends State<KelolaRutePage> {
     _fetchRoutes();
   }
 
+  // 3. UBAH fungsi fetch agar mengambil dua API sekaligus
   Future<void> _fetchRoutes() async {
     setState(() => _isLoading = true);
     try {
-      final response = await _routeService.getAllThematicRoutes();
-      if (response['success'] == true) {
-        final List<dynamic> data = response['data'];
+      // Gunakan Future.wait untuk menjalankan 2 API secara bersamaan
+      final responses = await Future.wait([
+        _routeService.getAllThematicRoutes(),
+        _routeDetailService.getAllRouteDetails(),
+      ]);
+
+      final routeResponse = responses[0];
+      final detailResponse = responses[1];
+
+      if (routeResponse['success'] == true && detailResponse['success'] == true) {
+        final List<dynamic> routeData = routeResponse['data'];
+        final List<dynamic> detailData = detailResponse['data'];
+        
         setState(() {
-          _allRoutes = data.map((json) => ThematicRouteModel.fromJson(json)).toList();
+          _allRoutes = routeData.map((json) => ThematicRouteModel.fromJson(json)).toList();
+          _allRouteDetails = detailData.map((json) => RouteDetailModel.fromJson(json)).toList();
         });
       }
     } catch (e) {
@@ -84,15 +105,34 @@ class _KelolaRutePageState extends State<KelolaRutePage> {
     }
 
     return ListView.builder(
-      padding: const EdgeInsets.only(left: 16, right: 16, top: 16, bottom: 120), // Padding bawah agar tidak tertutup navbar
+      padding: const EdgeInsets.only(left: 16, right: 16, top: 16, bottom: 120), 
       itemCount: routes.length,
       itemBuilder: (context, index) {
         final route = routes[index];
+
+        // 4. LOGIKA PENGHITUNGAN DESTINASI: 
+        // Hitung berapa banyak detail rute yang thematicRouteId-nya sama dengan id rute ini
+        final int jumlahDestinasi = _allRouteDetails
+            .where((detail) => detail.thematicRouteId.toString() == route.id)
+            .length;
 
         return Card(
           elevation: 2,
           margin: const EdgeInsets.only(bottom: 12),
           child: ListTile(
+            onTap: () async {
+              // Gunakan await agar jika admin selesai menambah destinasi, halaman ini ter-refresh
+              await Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => KelolaRuteDetailPage(
+                    thematicRouteId: int.parse(route.id),
+                    judulRute: route.judulRute,
+                  ),
+                ),
+              );
+              _fetchRoutes(); // Refresh data jika kembali dari detail rute
+            },
             leading: CircleAvatar(
               backgroundColor: !route.isDelete ? Colors.green : Colors.grey,
               child: const Icon(Icons.alt_route, color: Colors.white),
@@ -108,7 +148,12 @@ class _KelolaRutePageState extends State<KelolaRutePage> {
             subtitle: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text("${route.panjangRute} km • ${route.deskripsi}", maxLines: 2, overflow: TextOverflow.ellipsis),
+                // 5. UBAH TAMPILAN TEKS DI SINI
+                Text(
+                  "$jumlahDestinasi Destinasi • ${route.deskripsi}", 
+                  maxLines: 2, 
+                  overflow: TextOverflow.ellipsis,
+                ),
               ],
             ),
             trailing: IconButton(
@@ -126,7 +171,6 @@ class _KelolaRutePageState extends State<KelolaRutePage> {
 
   @override
   Widget build(BuildContext context) {
-    // isDelete: false berarti rute Aktif, isDelete: true berarti History
     final listAktif = _allRoutes.where((r) => !r.isDelete).toList();
     final listHistory = _allRoutes.where((r) => r.isDelete).toList();
 
@@ -136,7 +180,7 @@ class _KelolaRutePageState extends State<KelolaRutePage> {
         appBar: AppBar(
           title: const Text("Kelola Rute"),
           bottom: const TabBar(
-            isScrollable: false, // Dibagi rata
+            isScrollable: false, 
             labelColor: Colors.green,
             unselectedLabelColor: Colors.grey,
             indicatorColor: Colors.green,
@@ -154,21 +198,19 @@ class _KelolaRutePageState extends State<KelolaRutePage> {
                   _buildRouteList(listHistory),
                 ],
               ),
-        // Tombol melayang untuk menambah rute baru
         floatingActionButton: Padding(
-          padding: const EdgeInsets.only(bottom: 70), // Naikkan sedikit agar tidak tabrakan dengan custom navbar
+          padding: const EdgeInsets.only(bottom: 70), 
           child: FloatingActionButton(
             backgroundColor: Colors.green,
             foregroundColor: Colors.white,
-            onPressed: () async { // 1. Arahkan ke halaman Tambah Rute dan tunggu hasilnya (karena kita melempar Navigator.pop(context, true) jika sukses)
+            onPressed: () async { 
               final result = await Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => const TambahRutePage(), // Import file tambah_rute.dart di atas!
+                  builder: (context) => const TambahRutePage(), 
                 ),
               );
 
-              // 2. Jika result bernilai true (artinya rute berhasil ditambahkan), Refresh data!
               if (result == true) {
                 _fetchRoutes();
               }

@@ -1,0 +1,18 @@
+import 'dart:convert';
+import 'package:http/http.dart' as http;
+import '../constants/api.dart';
+import '../helpers/api_helper.dart';
+
+class MerchantService {
+  // Mengambil semua data merchant
+  Future<Map<String, dynamic>> getAllMerchants() async {
+    final headers = await ApiHelper.authHeaders();
+    
+    final response = await http.get(
+      Uri.parse("${Api.baseUrl}/merchants"),
+      headers: headers,
+    );
+    
+    return jsonDecode(response.body);
+  }
+}

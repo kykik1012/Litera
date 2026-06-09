@@ -5,6 +5,7 @@ import 'helpers/shared_pref_helper.dart';
 import 'package:litera/pages/super_admin/admin_dashboard.dart';
 import 'package:litera/pages/super_admin/kelola_akun.dart';
 import 'package:litera/pages/super_admin/kelola_rute.dart';
+import 'package:litera/pages/super_admin/kelola_review.dart';
 
 import 'package:litera/pages/merchant/merchant_dashboard_page.dart';
 import 'package:litera/pages/customer/customer_dashboard_page.dart';
@@ -47,7 +48,7 @@ class _MainScreenState extends State<MainScreen> {
       return [
         AdminDashboardPage(),
         KelolaAkunPage(),
-        const Center(child: Text("Halaman Pindai/Aksi Admin")), // Tombol Tengah
+        KelolaReviewPage(), // Tombol Tengah
         KelolaRutePage(),
         const ProfilePage(),
       ];
@@ -195,7 +196,7 @@ class _MainScreenState extends State<MainScreen> {
       _buildNavItem(0, Icons.home_rounded, "Beranda"),
       _buildNavItem(1, Icons.manage_accounts_outlined, "Akun"),
       // Admin diberi warna hijau tua untuk tombol tengah
-      _buildCenterNavItem(2, Icons.qr_code_scanner_rounded, "Pindai", darkGreen, Colors.white),
+      _buildCenterNavItem(2, Icons.rate_review_rounded, "Review", darkGreen, Colors.white),
       _buildNavItem(3, Icons.alt_route_rounded, "Rute"),
       _buildNavItem(4, Icons.person_outline_rounded, "Profil"),
     ];
