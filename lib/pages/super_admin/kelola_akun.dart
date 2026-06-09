@@ -135,7 +135,7 @@ class _KelolaAkunPageState extends State<KelolaAkunPage> {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                   decoration: BoxDecoration(
-                    color: user.isActive ? Colors.green.withOpacity(0.2) : Colors.red.withOpacity(0.2),
+                    color: user.isActive ? Colors.green.withValues(alpha: 0.2) : Colors.red.withValues(alpha: 0.2),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Text(

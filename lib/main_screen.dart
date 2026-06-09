@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../helpers/shared_pref_helper.dart';
+import 'helpers/shared_pref_helper.dart';
 
 // Import halaman dashboard
 import 'package:litera/pages/super_admin/admin_dashboard.dart';
@@ -20,8 +20,6 @@ class MainScreen extends StatefulWidget {
 class _MainScreenState extends State<MainScreen> {
   int _currentIndex = 0;
   int? _userRole;
-  String _username = "";
-  String _email = "";
   bool _isLoading = true;
 
   // Warna Utama (Disesuaikan dengan gambar)
@@ -36,13 +34,9 @@ class _MainScreenState extends State<MainScreen> {
 
   Future<void> _loadUserData() async {
     final role = await SharedPrefHelper.getRole();
-    final username = await SharedPrefHelper.getUsername() ?? "";
-    final email = await SharedPrefHelper.getEmail() ?? "";
 
     setState(() {
       _userRole = role;
-      _username = username;
-      _email = email;
       _isLoading = false;
     });
   }
@@ -55,7 +49,7 @@ class _MainScreenState extends State<MainScreen> {
         KelolaAkunPage(),
         const Center(child: Text("Halaman Pindai/Aksi Admin")), // Tombol Tengah
         KelolaRutePage(),
-        ProfilePage(name: _username, email: _email),
+        const ProfilePage(),
       ];
     } else if (_userRole == 1) { // MERCHANT
       return [
@@ -63,7 +57,7 @@ class _MainScreenState extends State<MainScreen> {
         const Center(child: Text("Halaman Usaha")),
         const Center(child: Text("Halaman Pindai Voucher")), // Tombol Tengah
         const Center(child: Text("Halaman Ulasan")),
-        ProfilePage(name: _username, email: _email),
+        const ProfilePage(),
       ];
     } else { // CUSTOMER / USER (Role = 2)
       return [
@@ -71,7 +65,7 @@ class _MainScreenState extends State<MainScreen> {
         const Center(child: Text("Halaman Jelajah")),
         const Center(child: Text("Halaman Pindai Objek")), // Tombol Tengah
         const Center(child: Text("Halaman Promo")),
-        ProfilePage(name: _username, email: _email),
+        const ProfilePage(),
       ];
     }
   }
@@ -95,7 +89,7 @@ class _MainScreenState extends State<MainScreen> {
               ),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
+                  color: Colors.black.withValues(alpha: 0.05),
                   blurRadius: 10,
                   offset: const Offset(0, -4),
                 ),
@@ -170,7 +164,7 @@ class _MainScreenState extends State<MainScreen> {
                   border: Border.all(color: Colors.white, width: 4), // Border putih pembatas
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.1),
+                      color: Colors.black.withValues(alpha: 0.1),
                       blurRadius: 8,
                       offset: const Offset(0, 4),
                     ),

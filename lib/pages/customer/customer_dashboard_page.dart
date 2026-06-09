@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-import '../../helpers/shared_pref_helper.dart';
 import '../profile/profile_page.dart';
 
 class CustomerDashboardPage
@@ -21,33 +20,6 @@ class _CustomerDashboardPageState
 
   int currentIndex = 0;
 
-  String username = "";
-  String email = "";
-
-  @override
-  void initState() {
-
-    super.initState();
-
-    loadUser();
-  }
-
-  Future<void> loadUser()
-  async {
-
-    username =
-        await SharedPrefHelper
-            .getUsername() ??
-            "";
-
-    email =
-        await SharedPrefHelper
-            .getEmail() ??
-            "";
-
-    setState(() {});
-  }
-
   @override
   Widget build(BuildContext context) {
 
@@ -59,10 +31,7 @@ class _CustomerDashboardPageState
         ),
       ),
 
-      ProfilePage(
-        name: username,
-        email: email,
-      ),
+      const ProfilePage(),
     ];
 
     return Scaffold(

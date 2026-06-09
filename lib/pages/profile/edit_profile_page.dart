@@ -1,244 +1,143 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../../helpers/shared_pref_helper.dart';
 import '../../services/user_service.dart';
 
-class EditProfilePage
-    extends StatefulWidget {
-
-  const EditProfilePage({
-    super.key,
-  });
+class EditProfilePage extends StatefulWidget {
+  const EditProfilePage({super.key});
 
   @override
-  State<EditProfilePage>
-      createState() =>
-          _EditProfilePageState();
+  State<EditProfilePage> createState() => _EditProfilePageState();
 }
 
-class _EditProfilePageState
-    extends State<EditProfilePage> {
-
-  final userService =
-      UserService();
+class _EditProfilePageState extends State<EditProfilePage> {
+  final userService = UserService();
 
   bool isLoading = true;
+  bool isSaving = false;
 
   int userId = 0;
-
   int role = 2;
 
   File? selectedImage;
-
   String? profilePicture;
 
-  final nameController =
-      TextEditingController();
+  final nameController = TextEditingController();
+  final passwordController = TextEditingController();
+  final confirmPasswordController = TextEditingController();
 
-  final namaBisnisController =
-      TextEditingController();
+  // Merchant-only fields
+  final namaBisnisController = TextEditingController();
+  final deskripsiController = TextEditingController();
+  final tahunController = TextEditingController();
 
-  final deskripsiController =
-      TextEditingController();
-
-  final tahunController =
-      TextEditingController();
+  bool _isPasswordHidden = true;
+  bool _isConfirmPasswordHidden = true;
 
   @override
   void initState() {
-
     super.initState();
-
     loadProfile();
   }
 
-  Future<void> loadProfile()
-  async {
+  Future<void> loadProfile() async {
+    userId = await SharedPrefHelper.getUserId() ?? 0;
 
-    userId =
-        await SharedPrefHelper
-            .getUserId() ?? 0;
+    final response = await userService.getUserById(userId);
 
-    final response =
-        await userService
-            .getUserById(
-      userId,
-    );
+    if (response["success"] == true) {
+      final data = response["data"];
 
-    if (
-        response["success"] ==
-        true) {
-
-      final data =
-          response["data"];
-
-      role = int.parse(
-        data["role"]
-            .toString(),
-      );
-
-      profilePicture =
-          data["profile_picture"];
+      role = int.parse(data["role"].toString());
+      profilePicture = data["profile_picture"];
 
       if (role == 2) {
-
-        nameController.text =
-            data["name"] ?? "";
-      }
-
-      else {
-
-        namaBisnisController.text =
-            data["nama_bisnis"] ?? "";
-
-        deskripsiController.text =
-            data["deskripsi"] ?? "";
-
-        tahunController.text =
-            data["tahun_berdiri"]
-                    ?.toString() ??
-                "";
+        nameController.text = data["name"] ?? "";
+      } else {
+        namaBisnisController.text = data["nama_bisnis"] ?? "";
+        deskripsiController.text = data["deskripsi"] ?? "";
+        tahunController.text = data["tahun_berdiri"]?.toString() ?? "";
       }
     }
 
     setState(() {
-
       isLoading = false;
     });
   }
 
-  Future<void> pickImage()
-  async {
-
-    final picker =
-        ImagePicker();
-
-    final image =
-        await picker.pickImage(
-      source:
-          ImageSource.gallery,
-    );
-
+  Future<void> pickImage() async {
+    final picker = ImagePicker();
+    final image = await picker.pickImage(source: ImageSource.gallery);
     if (image == null) return;
-
     setState(() {
-
-      selectedImage =
-          File(image.path);
+      selectedImage = File(image.path);
     });
   }
 
-  Future<void> saveProfile()
-  async {
+  Future<void> saveProfile() async {
+    // Validate password match if user entered passwords
+    if (passwordController.text.isNotEmpty ||
+        confirmPasswordController.text.isNotEmpty) {
+      if (passwordController.text != confirmPasswordController.text) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text("Konfirmasi password tidak sesuai"),
+          ),
+        );
+        return;
+      }
+    }
 
     setState(() {
-
-      isLoading = true;
+      isSaving = true;
     });
 
     try {
-
       if (selectedImage != null) {
-
-        await userService
-            .uploadProfilePicture(
-
+        await userService.uploadProfilePicture(
           id: userId,
-
-          image:
-              selectedImage!,
+          image: selectedImage!,
         );
       }
 
-      Map<String, dynamic>
-          response;
+      Map<String, dynamic> response;
 
       if (role == 2) {
-
-        response =
-            await userService
-                .updateCustomer(
-
+        response = await userService.updateCustomer(
           id: userId,
-
-          name:
-              nameController.text,
+          name: nameController.text,
         );
-      }
-
-      else {
-
-        response =
-            await userService
-                .updateMerchant(
-
+      } else {
+        response = await userService.updateMerchant(
           id: userId,
-
-          namaBisnis:
-              namaBisnisController
-                  .text,
-
-          deskripsi:
-              deskripsiController
-                  .text,
-
-          tahunBerdiri:
-              int.parse(
-            tahunController.text,
-          ),
+          namaBisnis: namaBisnisController.text,
+          deskripsi: deskripsiController.text,
+          tahunBerdiri: int.parse(tahunController.text),
         );
       }
 
       if (!mounted) return;
 
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(
-
-        SnackBar(
-          content: Text(
-            response["message"],
-          ),
-        ),
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(response["message"])),
       );
 
-      if (
-          response["success"] ==
-          true) {
-
-        Navigator.pop(
-          context,
-          true,
-        );
+      if (response["success"] == true) {
+        Navigator.pop(context, true);
       }
-    }
-
-    catch (e) {
-
+    } catch (e) {
       if (!mounted) return;
-
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(
-
-        SnackBar(
-          content: Text(
-            e.toString(),
-          ),
-        ),
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.toString())),
       );
-    }
-
-    finally {
-
+    } finally {
       if (mounted) {
-
         setState(() {
-
-          isLoading = false;
+          isSaving = false;
         });
       }
     }
@@ -246,265 +145,399 @@ class _EditProfilePageState
 
   @override
   void dispose() {
-
     nameController.dispose();
-
+    passwordController.dispose();
+    confirmPasswordController.dispose();
     namaBisnisController.dispose();
-
     deskripsiController.dispose();
-
     tahunController.dispose();
-
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
+    const Color bgColor = Color(0xFFF0F4F3);
+    const Color darkText = Color(0xFF1A1A2E);
+    const Color subtitleColor = Color(0xFF6B7280);
+    const Color tealColor = Color(0xFF1A7A6D);
+    const Color inputHintColor = Color(0xFFA0AEC0);
+    const Color underlineColor = Color(0xFFD1D5DB);
+    const Color limeGreen = Color(0xFFB8E926);
+    const Color bannerBg = Color(0xFFD4F0ED);
+    const Color bannerText = Color(0xFF145C54);
 
     if (isLoading) {
-
-      return const Scaffold(
-
-        body: Center(
-
-          child:
-              CircularProgressIndicator(),
-        ),
+      return Scaffold(
+        backgroundColor: bgColor,
+        body: const Center(child: CircularProgressIndicator()),
       );
     }
 
     return Scaffold(
-
-      appBar: AppBar(
-
-        title:
-            const Text(
-          "Edit Profile",
-        ),
-      ),
-
-      body: SingleChildScrollView(
-
-        padding:
-            const EdgeInsets.all(
-          20,
-        ),
-
+      backgroundColor: bgColor,
+      body: SafeArea(
         child: Column(
-
           children: [
-
-            Center(
-
-              child: Stack(
-
+            // ── Custom App Bar ──
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+              child: Row(
                 children: [
-
-                  GestureDetector(
-
-                    onTap:
-                        pickImage,
-
-                    child:
-                        CircleAvatar(
-
-                      radius: 60,
-
-                      backgroundImage:
-
-                          selectedImage !=
-                                  null
-
-                              ? FileImage(
-                                  selectedImage!,
-                                )
-
-                              : profilePicture !=
-                                      null
-
-                                  ? NetworkImage(
-                                      profilePicture!,
-                                    )
-
-                                  : null,
-
-                      child:
-
-                          selectedImage ==
-                                      null &&
-                                  profilePicture ==
-                                      null
-
-                              ? const Icon(
-                                  Icons.person,
-                                  size: 60,
-                                )
-
-                              : null,
+                  IconButton(
+                    onPressed: () => Navigator.pop(context),
+                    icon: const Icon(
+                      Icons.chevron_left_rounded,
+                      size: 28,
+                      color: darkText,
                     ),
                   ),
-
-                  Positioned(
-
-                    bottom: 0,
-
-                    right: 0,
-
-                    child:
-                        GestureDetector(
-
-                      onTap:
-                          pickImage,
-
-                      child:
-                          Container(
-
-                        padding:
-                            const EdgeInsets
-                                .all(
-                          8,
-                        ),
-
-                        decoration:
-                            const BoxDecoration(
-
-                          color:
-                              Colors.blue,
-
-                          shape:
-                              BoxShape.circle,
-                        ),
-
-                        child:
-                            const Icon(
-
-                          Icons.camera_alt,
-
-                          color:
-                              Colors.white,
-
-                          size: 20,
+                  Expanded(
+                    child: Center(
+                      child: Text(
+                        'Edit Profil',
+                        style: GoogleFonts.poppins(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w600,
+                          color: darkText,
                         ),
                       ),
                     ),
                   ),
+                  const SizedBox(width: 48), // balance the back button
                 ],
               ),
             ),
 
-            const SizedBox(
-              height: 24,
-            ),
+            // ── Scrollable Content ──
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.symmetric(horizontal: 24),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const SizedBox(height: 8),
 
-            if (role == 2) ...[
+                    // ── Info Banner ──
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 14,
+                      ),
+                      decoration: BoxDecoration(
+                        color: bannerBg,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Text(
+                        'Cek datamu dan ubah jika perlu, lalu klik "Simpan".',
+                        style: GoogleFonts.poppins(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w400,
+                          color: bannerText,
+                        ),
+                      ),
+                    ),
 
-              TextField(
+                    const SizedBox(height: 24),
 
-                controller:
-                    nameController,
+                    // ── Data Akun heading ──
+                    Text(
+                      'Data Akun',
+                      style: GoogleFonts.poppins(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                        color: darkText,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Pastikan Anda mengisi data dengan benar sebelum menyimpan, yaa.',
+                      style: GoogleFonts.poppins(
+                        fontSize: 13,
+                        color: subtitleColor,
+                        height: 1.5,
+                      ),
+                    ),
 
-                decoration:
-                    const InputDecoration(
+                    const SizedBox(height: 24),
 
-                  labelText:
-                      "Nama",
+                    // ── Avatar with Edit ──
+                    Center(
+                      child: Column(
+                        children: [
+                          GestureDetector(
+                            onTap: pickImage,
+                            child: Container(
+                              width: 90,
+                              height: 90,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: const Color(0xFFD4F0ED),
+                                border: Border.all(
+                                  color: const Color(0xFFB8E0DB),
+                                  width: 2,
+                                ),
+                              ),
+                              child: ClipOval(
+                                child: selectedImage != null
+                                    ? Image.file(
+                                        selectedImage!,
+                                        fit: BoxFit.cover,
+                                        width: 90,
+                                        height: 90,
+                                      )
+                                    : profilePicture != null
+                                        ? Image.network(
+                                            profilePicture!,
+                                            fit: BoxFit.cover,
+                                            width: 90,
+                                            height: 90,
+                                            errorBuilder: (_, __, ___) =>
+                                                const Icon(
+                                              Icons.person,
+                                              size: 44,
+                                              color: Color(0xFF145C54),
+                                            ),
+                                          )
+                                        : const Icon(
+                                            Icons.person,
+                                            size: 44,
+                                            color: Color(0xFF145C54),
+                                          ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          GestureDetector(
+                            onTap: pickImage,
+                            child: Text(
+                              'Edit',
+                              style: GoogleFonts.poppins(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w500,
+                                color: darkText,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
 
-                  border:
-                      OutlineInputBorder(),
-                ),
-              ),
-            ],
+                    const SizedBox(height: 28),
 
-            if (role == 1) ...[
+                    // ── Form Fields ──
+                    if (role == 2) ...[
+                      // Nama field
+                      _buildLabeledField(
+                        label: 'Nama',
+                        controller: nameController,
+                        hintText: 'Masukkan nama lengkap',
+                        suffixIcon: Icon(
+                          Icons.person_outline,
+                          color: inputHintColor,
+                          size: 22,
+                        ),
+                        darkText: darkText,
+                        inputHintColor: inputHintColor,
+                        underlineColor: underlineColor,
+                        tealColor: tealColor,
+                        subtitleColor: subtitleColor,
+                      ),
+                      const SizedBox(height: 20),
+                    ],
 
-              TextField(
+                    if (role == 1) ...[
+                      _buildLabeledField(
+                        label: 'Nama Bisnis',
+                        controller: namaBisnisController,
+                        hintText: 'Masukkan nama bisnis',
+                        darkText: darkText,
+                        inputHintColor: inputHintColor,
+                        underlineColor: underlineColor,
+                        tealColor: tealColor,
+                        subtitleColor: subtitleColor,
+                      ),
+                      const SizedBox(height: 20),
+                      _buildLabeledField(
+                        label: 'Deskripsi',
+                        controller: deskripsiController,
+                        hintText: 'Masukkan deskripsi',
+                        darkText: darkText,
+                        inputHintColor: inputHintColor,
+                        underlineColor: underlineColor,
+                        tealColor: tealColor,
+                        subtitleColor: subtitleColor,
+                      ),
+                      const SizedBox(height: 20),
+                      _buildLabeledField(
+                        label: 'Tahun Berdiri',
+                        controller: tahunController,
+                        hintText: 'Masukkan tahun berdiri',
+                        keyboardType: TextInputType.number,
+                        darkText: darkText,
+                        inputHintColor: inputHintColor,
+                        underlineColor: underlineColor,
+                        tealColor: tealColor,
+                        subtitleColor: subtitleColor,
+                      ),
+                      const SizedBox(height: 20),
+                    ],
 
-                controller:
-                    namaBisnisController,
+                    // Kata Sandi field
+                    _buildLabeledField(
+                      label: 'Kata Sandi',
+                      controller: passwordController,
+                      hintText: 'Masukkan kata sandi baru',
+                      obscureText: _isPasswordHidden,
+                      suffixIcon: GestureDetector(
+                        onTap: () {
+                          setState(() {
+                            _isPasswordHidden = !_isPasswordHidden;
+                          });
+                        },
+                        child: Icon(
+                          _isPasswordHidden
+                              ? Icons.visibility_off_outlined
+                              : Icons.visibility_outlined,
+                          color: inputHintColor,
+                          size: 22,
+                        ),
+                      ),
+                      darkText: darkText,
+                      inputHintColor: inputHintColor,
+                      underlineColor: underlineColor,
+                      tealColor: tealColor,
+                      subtitleColor: subtitleColor,
+                    ),
+                    const SizedBox(height: 20),
 
-                decoration:
-                    const InputDecoration(
+                    // Konfirmasi Kata Sandi field
+                    _buildLabeledField(
+                      label: 'Konfirmasi Kata Sandi',
+                      controller: confirmPasswordController,
+                      hintText: 'Konfirmasi kata sandi baru',
+                      obscureText: _isConfirmPasswordHidden,
+                      suffixIcon: GestureDetector(
+                        onTap: () {
+                          setState(() {
+                            _isConfirmPasswordHidden =
+                                !_isConfirmPasswordHidden;
+                          });
+                        },
+                        child: Icon(
+                          _isConfirmPasswordHidden
+                              ? Icons.visibility_off_outlined
+                              : Icons.visibility_outlined,
+                          color: inputHintColor,
+                          size: 22,
+                        ),
+                      ),
+                      darkText: darkText,
+                      inputHintColor: inputHintColor,
+                      underlineColor: underlineColor,
+                      tealColor: tealColor,
+                      subtitleColor: subtitleColor,
+                    ),
 
-                  labelText:
-                      "Nama Bisnis",
+                    const SizedBox(height: 40),
 
-                  border:
-                      OutlineInputBorder(),
-                ),
-              ),
+                    // ── Simpan button ──
+                    SizedBox(
+                      width: double.infinity,
+                      height: 52,
+                      child: ElevatedButton(
+                        onPressed: isSaving ? null : saveProfile,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: limeGreen,
+                          disabledBackgroundColor: limeGreen.withValues(alpha: 0.5),
+                          foregroundColor: darkText,
+                          elevation: 0,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(30),
+                          ),
+                        ),
+                        child: isSaving
+                            ? const SizedBox(
+                                height: 22,
+                                width: 22,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2.5,
+                                  color: Color(0xFF1A1A2E),
+                                ),
+                              )
+                            : Text(
+                                'Simpan',
+                                style: GoogleFonts.poppins(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w600,
+                                  color: darkText,
+                                ),
+                              ),
+                      ),
+                    ),
 
-              const SizedBox(
-                height: 16,
-              ),
-
-              TextField(
-
-                controller:
-                    deskripsiController,
-
-                maxLines: 3,
-
-                decoration:
-                    const InputDecoration(
-
-                  labelText:
-                      "Deskripsi",
-
-                  border:
-                      OutlineInputBorder(),
-                ),
-              ),
-
-              const SizedBox(
-                height: 16,
-              ),
-
-              TextField(
-
-                controller:
-                    tahunController,
-
-                keyboardType:
-                    TextInputType.number,
-
-                decoration:
-                    const InputDecoration(
-
-                  labelText:
-                      "Tahun Berdiri",
-
-                  border:
-                      OutlineInputBorder(),
-                ),
-              ),
-            ],
-
-            const SizedBox(
-              height: 24,
-            ),
-
-            SizedBox(
-
-              width:
-                  double.infinity,
-
-              height: 50,
-
-              child:
-                  ElevatedButton(
-
-                onPressed:
-                    saveProfile,
-
-                child:
-                    const Text(
-                  "Simpan Perubahan",
+                    const SizedBox(height: 32),
+                  ],
                 ),
               ),
             ),
           ],
         ),
       ),
+    );
+  }
+
+  /// Helper to build a labeled underline field matching the design
+  Widget _buildLabeledField({
+    required String label,
+    required TextEditingController controller,
+    required String hintText,
+    required Color darkText,
+    required Color inputHintColor,
+    required Color underlineColor,
+    required Color tealColor,
+    required Color subtitleColor,
+    Widget? suffixIcon,
+    bool obscureText = false,
+    TextInputType? keyboardType,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: GoogleFonts.poppins(
+            fontSize: 12,
+            fontWeight: FontWeight.w400,
+            color: subtitleColor,
+          ),
+        ),
+        TextField(
+          controller: controller,
+          obscureText: obscureText,
+          keyboardType: keyboardType,
+          style: GoogleFonts.poppins(
+            fontSize: 15,
+            color: darkText,
+          ),
+          decoration: InputDecoration(
+            hintText: hintText,
+            hintStyle: GoogleFonts.poppins(
+              fontSize: 15,
+              color: inputHintColor,
+            ),
+            suffixIcon: suffixIcon,
+            border: InputBorder.none,
+            enabledBorder: UnderlineInputBorder(
+              borderSide: BorderSide(color: underlineColor, width: 1),
+            ),
+            focusedBorder: UnderlineInputBorder(
+              borderSide: BorderSide(color: tealColor, width: 2),
+            ),
+            contentPadding: const EdgeInsets.symmetric(vertical: 12),
+          ),
+        ),
+      ],
     );
   }
 }
