@@ -6,9 +6,9 @@ import 'package:litera/pages/super_admin/admin_dashboard.dart';
 import 'package:litera/pages/super_admin/kelola_akun.dart';
 import 'package:litera/pages/super_admin/kelola_rute.dart';
 import 'package:litera/pages/super_admin/kelola_review.dart';
-
 import 'package:litera/pages/merchant/merchant_dashboard_page.dart';
 import 'package:litera/pages/customer/customer_dashboard_page.dart';
+import 'package:litera/pages/customer/customer_jelajah_page.dart';
 import 'package:litera/pages/profile/profile_page.dart';
 
 class MainScreen extends StatefulWidget {
@@ -63,7 +63,7 @@ class _MainScreenState extends State<MainScreen> {
     } else { // CUSTOMER / USER (Role = 2)
       return [
         const CustomerDashboardPage(),
-        const Center(child: Text("Halaman Jelajah")),
+        const CustomerJelajahPage(),
         const Center(child: Text("Halaman Pindai Objek")), // Tombol Tengah
         const Center(child: Text("Halaman Promo")),
         const ProfilePage(),
