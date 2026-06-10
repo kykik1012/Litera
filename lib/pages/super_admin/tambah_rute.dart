@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import '../../services/thematic_service.dart'; // Sesuaikan path ini dengan lokasimu
+import 'package:google_fonts/google_fonts.dart';
+import '../../services/thematic_service.dart';
 
 class TambahRutePage extends StatefulWidget {
   const TambahRutePage({super.key});
@@ -15,6 +16,9 @@ class _TambahRutePageState extends State<TambahRutePage> {
 
   final ThematicRouteService _routeService = ThematicRouteService();
   bool _isLoading = false;
+
+  static const Color tealDark = Color(0xFF145C54);
+  static const Color limeGreen = Color(0xFFB8E926);
 
   Future<void> _submitData() async {
     // Validasi form agar tidak ada yang kosong
@@ -70,8 +74,24 @@ class _TambahRutePageState extends State<TambahRutePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
       appBar: AppBar(
-        title: const Text("Tambah Rute Tematik"),
+        backgroundColor: Colors.white,
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios_new, color: Color(0xFF1A1A2E), size: 20),
+          onPressed: () => Navigator.pop(context),
+        ),
+        centerTitle: true,
+        title: Text(
+          "Tambah Rute Tematik",
+          style: GoogleFonts.poppins(
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+            color: const Color(0xFF1A1A2E),
+          ),
+        ),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -82,9 +102,25 @@ class _TambahRutePageState extends State<TambahRutePage> {
             children: [
               TextFormField(
                 controller: _judulController,
-                decoration: const InputDecoration(
+                style: GoogleFonts.poppins(fontSize: 14),
+                decoration: InputDecoration(
                   labelText: "Judul Rute",
-                  border: OutlineInputBorder(),
+                  labelStyle: GoogleFonts.poppins(color: Colors.grey[600]),
+                  filled: true,
+                  fillColor: Colors.grey.shade50,
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: Colors.grey.shade300),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: Colors.grey.shade300),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(color: tealDark, width: 1.5),
+                  ),
                 ),
                 validator: (value) {
                   if (value == null || value.trim().isEmpty) {
@@ -96,9 +132,25 @@ class _TambahRutePageState extends State<TambahRutePage> {
               const SizedBox(height: 16),
               TextFormField(
                 controller: _deskripsiController,
-                decoration: const InputDecoration(
+                style: GoogleFonts.poppins(fontSize: 14),
+                decoration: InputDecoration(
                   labelText: "Deskripsi",
-                  border: OutlineInputBorder(),
+                  labelStyle: GoogleFonts.poppins(color: Colors.grey[600]),
+                  filled: true,
+                  fillColor: Colors.grey.shade50,
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: Colors.grey.shade300),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: Colors.grey.shade300),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(color: tealDark, width: 1.5),
+                  ),
                 ),
                 maxLines: 4, // Membuat text field lebih besar ke bawah
                 validator: (value) {
@@ -112,22 +164,25 @@ class _TambahRutePageState extends State<TambahRutePage> {
               ElevatedButton(
                 onPressed: _isLoading ? null : _submitData,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.green,
-                  foregroundColor: Colors.white,
+                  backgroundColor: tealDark,
+                  foregroundColor: limeGreen,
                   padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                 ),
                 child: _isLoading
                     ? const SizedBox(
                         height: 20,
                         width: 20,
                         child: CircularProgressIndicator(
-                          color: Colors.white,
+                          color: limeGreen,
                           strokeWidth: 2,
                         ),
                       )
-                    : const Text(
+                    : Text(
                         "Simpan Rute",
-                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                        style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.bold),
                       ),
               ),
             ],

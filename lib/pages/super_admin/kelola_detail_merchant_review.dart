@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import '../../models/review.dart'; // Sesuaikan nama file ini jika namanya review_model.dart
+import 'package:google_fonts/google_fonts.dart';
+import '../../models/review.dart';
 import '../../services/review_service.dart';
 
 class KelolaDetailMerchantReviewPage extends StatefulWidget {
@@ -19,9 +20,11 @@ class KelolaDetailMerchantReviewPage extends StatefulWidget {
 class _KelolaDetailMerchantReviewPageState extends State<KelolaDetailMerchantReviewPage> {
   final ReviewService _reviewService = ReviewService();
   
-  // 1. UBAH DI SINI: Review menjadi ReviewModel
   List<ReviewModel> _merchantReviews = [];
   bool _isLoading = true;
+
+  static const Color tealDark = Color(0xFF145C54);
+  static const Color limeGreen = Color(0xFFB8E926);
 
   @override
   void initState() {
@@ -55,19 +58,22 @@ class _KelolaDetailMerchantReviewPageState extends State<KelolaDetailMerchantRev
     bool confirm = await showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text(!review.isDelete ? "Hapus Ulasan?" : "Pulihkan Ulasan?"),
-        content: Text("Apakah Anda yakin ingin ${!review.isDelete ? 'menghapus' : 'memulihkan'} ulasan dari ${review.customerName}?"),
+        title: Text(!review.isDelete ? "Hapus Ulasan?" : "Pulihkan Ulasan?", style: GoogleFonts.poppins(fontWeight: FontWeight.bold)),
+        content: Text("Apakah Anda yakin ingin ${!review.isDelete ? 'menghapus' : 'memulihkan'} ulasan dari ${review.customerName}?", style: GoogleFonts.poppins()),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text("Batal", style: TextStyle(color: Colors.grey)),
+            child: Text("Batal", style: GoogleFonts.poppins(color: Colors.grey)),
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(context, true),
             style: ElevatedButton.styleFrom(
-              backgroundColor: !review.isDelete ? Colors.red : Colors.green,
+              backgroundColor: !review.isDelete ? Colors.red : limeGreen,
+              foregroundColor: !review.isDelete ? Colors.white : tealDark,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
             ),
-            child: const Text("Ya, Lanjutkan", style: TextStyle(color: Colors.white)),
+            child: Text("Ya, Lanjutkan", style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
           ),
         ],
       ),
@@ -110,7 +116,7 @@ class _KelolaDetailMerchantReviewPageState extends State<KelolaDetailMerchantRev
   // 4. UBAH DI SINI: List<Review> menjadi List<ReviewModel>
   Widget _buildReviewList(List<ReviewModel> reviews) {
     if (reviews.isEmpty) {
-      return const Center(child: Text("Tidak ada ulasan untuk merchant ini."));
+      return Center(child: Text("Tidak ada ulasan untuk merchant ini.", style: GoogleFonts.poppins(color: Colors.grey)));
     }
 
     return ListView.builder(
@@ -120,9 +126,13 @@ class _KelolaDetailMerchantReviewPageState extends State<KelolaDetailMerchantRev
         final review = reviews[index];
 
         return Card(
-          elevation: 2,
+          elevation: 0,
+          color: Colors.white,
           margin: const EdgeInsets.only(bottom: 16),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+            side: BorderSide(color: Colors.grey.shade200),
+          ),
           child: Padding(
             padding: const EdgeInsets.all(16.0),
             child: Column(
@@ -136,7 +146,7 @@ class _KelolaDetailMerchantReviewPageState extends State<KelolaDetailMerchantRev
                       children: [
                         Text(
                           review.customerName,
-                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                          style: GoogleFonts.poppins(fontWeight: FontWeight.bold, fontSize: 16, color: const Color(0xFF1A1A2E)),
                         ),
                         const SizedBox(height: 4),
                         _buildStarRating(review.rating),
@@ -146,15 +156,15 @@ class _KelolaDetailMerchantReviewPageState extends State<KelolaDetailMerchantRev
                       onPressed: () => _handleAction(review),
                       icon: Icon(
                         !review.isDelete ? Icons.delete_outline_rounded : Icons.restore_rounded,
-                        color: !review.isDelete ? Colors.red : Colors.green,
+                        color: !review.isDelete ? Colors.red : tealDark,
                       ),
                     ),
                   ],
                 ),
-                const Divider(height: 20),
+                const Divider(height: 20, color: Color(0xFFEEEEEE)),
                 Text(
                   review.deskripsi,
-                  style: TextStyle(color: Colors.grey[800], fontSize: 14),
+                  style: GoogleFonts.poppins(color: Colors.grey[800], fontSize: 14),
                 ),
                 
                 if (review.imageUrl != null && review.imageUrl!.isNotEmpty) ...[
@@ -192,29 +202,39 @@ class _KelolaDetailMerchantReviewPageState extends State<KelolaDetailMerchantRev
     return DefaultTabController(
       length: 2,
       child: Scaffold(
+        backgroundColor: Colors.grey[50],
         appBar: AppBar(
+          backgroundColor: Colors.white,
+          elevation: 0,
+          scrolledUnderElevation: 0,
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back_ios_new, color: Color(0xFF1A1A2E), size: 20),
+            onPressed: () => Navigator.pop(context),
+          ),
           title: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text("Daftar Ulasan", style: TextStyle(fontSize: 18)),
+              Text("Daftar Ulasan", style: GoogleFonts.poppins(fontSize: 18, fontWeight: FontWeight.bold, color: const Color(0xFF1A1A2E))),
               Text(
                 widget.namaBisnis,
-                style: const TextStyle(fontSize: 12, color: Colors.grey, fontWeight: FontWeight.normal),
+                style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey, fontWeight: FontWeight.normal),
               ),
             ],
           ),
-          bottom: const TabBar(
-            labelColor: Colors.green,
+          bottom: TabBar(
+            labelColor: tealDark,
             unselectedLabelColor: Colors.grey,
-            indicatorColor: Colors.green,
-            tabs: [
+            indicatorColor: limeGreen,
+            labelStyle: GoogleFonts.poppins(fontWeight: FontWeight.w600),
+            unselectedLabelStyle: GoogleFonts.poppins(),
+            tabs: const [
               Tab(text: "Ulasan Aktif"),
               Tab(text: "History"),
             ],
           ),
         ),
         body: _isLoading
-            ? const Center(child: CircularProgressIndicator())
+            ? const Center(child: CircularProgressIndicator(color: tealDark))
             : TabBarView(
                 children: [
                   _buildReviewList(activeReviews),

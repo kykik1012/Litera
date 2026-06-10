@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:litera/models/merchant.dart';
 import '../../services/merchant_service.dart';
 
@@ -17,6 +18,9 @@ class _KelolaReviewPageState extends State<KelolaReviewPage> {
   
   List<MerchantModel> _merchants = [];
   bool _isLoading = true;
+
+  static const Color tealDark = Color(0xFF145C54);
+  static const Color limeGreen = Color(0xFFB8E926);
 
   @override
   void initState() {
@@ -44,13 +48,25 @@ class _KelolaReviewPageState extends State<KelolaReviewPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.grey[50],
       appBar: AppBar(
-        title: const Text("Kelola Review"),
+        backgroundColor: Colors.white,
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        centerTitle: true,
+        title: Text(
+          "Kelola Review",
+          style: GoogleFonts.poppins(
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+            color: const Color(0xFF1A1A2E),
+          ),
+        ),
       ),
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
+          ? const Center(child: CircularProgressIndicator(color: tealDark))
           : _merchants.isEmpty
-              ? const Center(child: Text("Belum ada data merchant."))
+              ? Center(child: Text("Belum ada data merchant.", style: GoogleFonts.poppins(color: Colors.grey)))
               : ListView.builder(
                   // Padding 120 di bawah agar tidak tertutup navbar melayang
                   padding: const EdgeInsets.only(left: 16, right: 16, top: 16, bottom: 120),
@@ -59,19 +75,24 @@ class _KelolaReviewPageState extends State<KelolaReviewPage> {
                     final merchant = _merchants[index];
                     
                     return Card(
-                      elevation: 2,
+                      elevation: 0,
+                      color: Colors.white,
                       margin: const EdgeInsets.only(bottom: 12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        side: BorderSide(color: Colors.grey.shade200),
+                      ),
                       child: ListTile(
-                        leading: const CircleAvatar(
-                          backgroundColor: Colors.orange,
-                          child: Icon(Icons.storefront, color: Colors.white),
+                        leading: CircleAvatar(
+                          backgroundColor: limeGreen.withValues(alpha: 0.3),
+                          child: const Icon(Icons.storefront, color: tealDark),
                         ),
                         title: Text(
                           merchant.namaBisnis,
-                          style: const TextStyle(fontWeight: FontWeight.bold),
+                          style: GoogleFonts.poppins(fontWeight: FontWeight.bold, color: const Color(0xFF1A1A2E)),
                         ),
-                        subtitle: const Text("Lihat daftar ulasan"),
-                        trailing: const Icon(Icons.chevron_right),
+                        subtitle: Text("Lihat daftar ulasan", style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey[600])),
+                        trailing: const Icon(Icons.chevron_right, color: tealDark),
                         onTap: () {
                           // Arahkan ke halaman detail review milik merchant ini
                           Navigator.push(

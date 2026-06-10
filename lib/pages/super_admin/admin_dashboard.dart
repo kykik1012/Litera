@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 // Import service dan model rute
 import 'package:litera/services/thematic_service.dart';
@@ -11,8 +12,10 @@ import '../MAPS/map_navigation_page.dart';
 class AdminDashboardPage extends StatelessWidget {
   AdminDashboardPage({super.key});
 
-  // Inisialisasi service
   final ThematicRouteService _routeService = ThematicRouteService();
+
+  static const Color tealDark = Color(0xFF145C54);
+  static const Color limeGreen = Color(0xFFB8E926);
 
   // Fungsi khusus untuk membangun UI Beranda Admin (Daftar Rute)
   Widget _buildHomeContent() {
@@ -21,12 +24,12 @@ class AdminDashboardPage extends StatelessWidget {
       builder: (context, snapshot) {
         // 1. Tampilkan loading saat mengambil data
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator());
+          return const Center(child: CircularProgressIndicator(color: tealDark));
         }
         
         // 2. Tangani jika terjadi error koneksi
         if (snapshot.hasError) {
-          return Center(child: Text('Terjadi kesalahan: ${snapshot.error}'));
+          return Center(child: Text('Terjadi kesalahan: ${snapshot.error}', style: GoogleFonts.poppins()));
         }
 
         final response = snapshot.data;
@@ -41,7 +44,7 @@ class AdminDashboardPage extends StatelessWidget {
               .toList();
 
           if (routes.isEmpty) {
-            return const Center(child: Text('Belum ada rute tematik.'));
+            return Center(child: Text('Belum ada rute tematik.', style: GoogleFonts.poppins(color: Colors.grey)));
           }
 
           // 4. Buat List View berupa Card
@@ -51,10 +54,12 @@ class AdminDashboardPage extends StatelessWidget {
             itemBuilder: (context, index) {
               final route = routes[index];
               return Card(
-                elevation: 4,
+                elevation: 0,
+                color: Colors.white,
                 margin: const EdgeInsets.only(bottom: 16),
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(16),
+                  side: BorderSide(color: Colors.grey.shade200),
                 ),
                 child: Padding(
                   padding: const EdgeInsets.all(16.0),
@@ -63,37 +68,41 @@ class AdminDashboardPage extends StatelessWidget {
                     children: [
                       Text(
                         route.judulRute,
-                        style: const TextStyle(
-                          fontSize: 18, 
+                        style: GoogleFonts.poppins(
+                          fontSize: 16, 
                           fontWeight: FontWeight.bold,
+                          color: const Color(0xFF1A1A2E),
                         ),
                       ),
                       const SizedBox(height: 8),
                       Text(
                         route.deskripsi,
-                        style: TextStyle(color: Colors.grey[700]),
+                        style: GoogleFonts.poppins(color: Colors.grey[700], fontSize: 13),
                       ),
                       const SizedBox(height: 16),
                       Align(
                         alignment: Alignment.centerRight,
                         child: ElevatedButton.icon(
                           onPressed: () {
-                            // Navigasi ke Map Navigation Page dan kirimkan ID
                             Navigator.push(
                               context,
                               MaterialPageRoute(
                                 builder: (context) => MapNavigationPage(
-                                  // Parse id dari String (di model) menjadi int (di parameter page)
                                   thematicRouteId: int.parse(route.id),
                                 ),
                               ),
                             );
                           },
-                          icon: const Icon(Icons.play_arrow),
-                          label: const Text("Mulai"),
+                          icon: const Icon(Icons.play_arrow_rounded, size: 20),
+                          label: Text("Mulai", style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.green,
-                            foregroundColor: Colors.white,
+                            backgroundColor: limeGreen,
+                            foregroundColor: tealDark,
+                            elevation: 0,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                           ),
                         ),
                       ),
@@ -105,8 +114,7 @@ class AdminDashboardPage extends StatelessWidget {
           );
         }
 
-        // Tampilan default jika struktur response tidak sesuai
-        return const Center(child: Text('Gagal memuat data rute.'));
+        return Center(child: Text('Gagal memuat data rute.', style: GoogleFonts.poppins()));
       },
     );
   }
@@ -114,10 +122,21 @@ class AdminDashboardPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.grey[50],
       appBar: AppBar(
-        title: const Text("Admin Dashboard"),
+        backgroundColor: Colors.white,
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        centerTitle: true,
+        title: Text(
+          "Admin Dashboard",
+          style: GoogleFonts.poppins(
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+            color: const Color(0xFF1A1A2E),
+          ),
+        ),
       ),
-      // Langsung panggil FutureBuilder di dalam body
       body: _buildHomeContent(),
     );
   }

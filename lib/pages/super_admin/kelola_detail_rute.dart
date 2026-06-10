@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:litera/models/route_detail.dart';
 import '../../models/user_model.dart';
 import '../../services/route_detail_service.dart';
@@ -27,6 +28,9 @@ class _KelolaRuteDetailPageState extends State<KelolaRuteDetailPage> {
 
   List<RouteDetailModel> _filteredDetails = [];
   bool _isLoading = true;
+
+  static const Color tealDark = Color(0xFF145C54);
+  static const Color limeGreen = Color(0xFFB8E926);
 
   @override
   void initState() {
@@ -61,17 +65,21 @@ class _KelolaRuteDetailPageState extends State<KelolaRuteDetailPage> {
     bool confirm = await showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text("Hapus dari Rute?"),
-        content: Text("Apakah Anda yakin ingin menghapus '$namaBisnis' dari rute ini?"),
+        title: Text("Hapus dari Rute?", style: GoogleFonts.poppins(fontWeight: FontWeight.bold)),
+        content: Text("Apakah Anda yakin ingin menghapus '$namaBisnis' dari rute ini?", style: GoogleFonts.poppins()),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text("Batal", style: TextStyle(color: Colors.grey)),
+            child: Text("Batal", style: GoogleFonts.poppins(color: Colors.grey)),
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(context, true),
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-            child: const Text("Hapus", style: TextStyle(color: Colors.white)),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            ),
+            child: Text("Hapus", style: GoogleFonts.poppins(color: Colors.white, fontWeight: FontWeight.w600)),
           ),
         ],
       ),
@@ -98,43 +106,56 @@ class _KelolaRuteDetailPageState extends State<KelolaRuteDetailPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.grey[50],
       appBar: AppBar(
+        backgroundColor: Colors.white,
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios_new, color: Color(0xFF1A1A2E), size: 20),
+          onPressed: () => Navigator.pop(context),
+        ),
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text("Detail Lokasi Rute", style: TextStyle(fontSize: 18)),
+            Text("Detail Lokasi Rute", style: GoogleFonts.poppins(fontSize: 18, fontWeight: FontWeight.bold, color: const Color(0xFF1A1A2E))),
             Text(
               widget.judulRute,
-              style: const TextStyle(fontSize: 12, color: Colors.grey, fontWeight: FontWeight.normal),
+              style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey, fontWeight: FontWeight.normal),
             ),
           ],
         ),
       ),
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
+          ? const Center(child: CircularProgressIndicator(color: tealDark))
           : _filteredDetails.isEmpty
-              ? const Center(child: Text("Belum ada lokasi merchant di rute ini."))
+              ? Center(child: Text("Belum ada lokasi merchant di rute ini.", style: GoogleFonts.poppins(color: Colors.grey)))
               : ListView.builder(
                   padding: const EdgeInsets.only(left: 16, right: 16, top: 16, bottom: 120),
                   itemCount: _filteredDetails.length,
                   itemBuilder: (context, index) {
                     final detail = _filteredDetails[index];
                     return Card(
-                      elevation: 2,
+                      elevation: 0,
+                      color: Colors.white,
                       margin: const EdgeInsets.only(bottom: 12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        side: BorderSide(color: Colors.grey.shade200),
+                      ),
                       child: ListTile(
                         leading: CircleAvatar(
-                          backgroundColor: const Color(0xFF003D33),
+                          backgroundColor: tealDark,
                           child: Text(
                             "${index + 1}",
-                            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                            style: GoogleFonts.poppins(color: limeGreen, fontWeight: FontWeight.bold),
                           ),
                         ),
                         title: Text(
                           detail.namaBisnis,
-                          style: const TextStyle(fontWeight: FontWeight.bold),
+                          style: GoogleFonts.poppins(fontWeight: FontWeight.bold, color: const Color(0xFF1A1A2E)),
                         ),
-                        subtitle: Text("Lat: ${detail.latitude}\nLng: ${detail.longitude}"),
+                        subtitle: Text("Lat: ${detail.latitude}\nLng: ${detail.longitude}", style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey[600])),
                         trailing: IconButton(
                           icon: const Icon(Icons.delete_sweep_outlined, color: Colors.red),
                           onPressed: () => _deleteDetail(detail.id, detail.namaBisnis),
@@ -162,10 +183,10 @@ class _KelolaRuteDetailPageState extends State<KelolaRuteDetailPage> {
               _loadData();
             }
           },
-          backgroundColor: Colors.green,
-          foregroundColor: Colors.white,
+          backgroundColor: tealDark,
+          foregroundColor: limeGreen,
           icon: const Icon(Icons.add_location_alt_rounded),
-          label: const Text("Tambah Toko"),
+          label: Text("Tambah Toko", style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
         ),
       ),
     );

@@ -68,7 +68,7 @@ class _ProfilePageState extends State<ProfilePage> {
 
   @override
   Widget build(BuildContext context) {
-    const Color bgColor = Color(0xFFF0F4F3);
+    const Color bgColor = Color.fromARGB(255, 255, 255, 255);
     const Color tealDark = Color(0xFF145C54);
     const Color tealColor = Color(0xFF1A7A6D);
     const Color limeGreen = Color(0xFFB8E926);

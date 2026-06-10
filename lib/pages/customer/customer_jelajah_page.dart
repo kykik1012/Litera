@@ -44,7 +44,10 @@ class _CustomerJelajahPageState extends State<CustomerJelajahPage> {
 
       if (routeRes['success'] == true) {
         final List<dynamic> rData = routeRes['data'];
-        _routes = rData.map((e) => ThematicRouteModel.fromJson(e)).where((r) => !r.isDelete).toList();
+        _routes = rData
+            .map((e) => ThematicRouteModel.fromJson(e))
+            .where((r) => !r.isDelete)
+            .toList();
       }
 
       if (merchantRes['success'] == true) {
@@ -65,9 +68,13 @@ class _CustomerJelajahPageState extends State<CustomerJelajahPage> {
     }
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F7F8), // Latar belakang abu-abu sangat muda
+      backgroundColor: const Color(
+        0xFFF5F7F8,
+      ), // Latar belakang abu-abu sangat muda
       body: SingleChildScrollView(
-        padding: const EdgeInsets.only(bottom: 120), // Jarak aman untuk custom navbar
+        padding: const EdgeInsets.only(
+          bottom: 120,
+        ), // Jarak aman untuk custom navbar
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -75,14 +82,17 @@ class _CustomerJelajahPageState extends State<CustomerJelajahPage> {
             _buildHeroSection(),
 
             const SizedBox(height: 30), // Jarak setelah kartu menonjol
-
             // 2. BAGIAN SEMUA RUTE TEMATIK
             if (_routes.isNotEmpty) ...[
               const Padding(
                 padding: EdgeInsets.symmetric(horizontal: 16.0),
                 child: Text(
                   "Semua Rute Tematik",
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF003D33)),
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF003D33),
+                  ),
                 ),
               ),
               const SizedBox(height: 12),
@@ -97,7 +107,11 @@ class _CustomerJelajahPageState extends State<CustomerJelajahPage> {
                 padding: EdgeInsets.symmetric(horizontal: 16.0),
                 child: Text(
                   "Eksplorasi Merchant",
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF003D33)),
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF003D33),
+                  ),
                 ),
               ),
               const SizedBox(height: 12),
@@ -112,7 +126,8 @@ class _CustomerJelajahPageState extends State<CustomerJelajahPage> {
   // --- KOMPONEN HEADER HERO ---
   Widget _buildHeroSection() {
     return Stack(
-      clipBehavior: Clip.none, // Mengizinkan widget anak meluap dari batas Stack
+      clipBehavior:
+          Clip.none, // Mengizinkan widget anak meluap dari batas Stack
       children: [
         // Gambar Background dengan Gradient Overlay
         Container(
@@ -121,17 +136,16 @@ class _CustomerJelajahPageState extends State<CustomerJelajahPage> {
           decoration: const BoxDecoration(
             image: DecorationImage(
               // Placeholder gambar kota/budaya. Bisa diganti NetworkImage jika ada URL dari API
-              image: NetworkImage('https://images.unsplash.com/photo-1555899434-94d1368aa7af?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80'),
+              image: NetworkImage(
+                'https://images.unsplash.com/photo-1555899434-94d1368aa7af?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
+              ),
               fit: BoxFit.cover,
             ),
           ),
           child: Container(
             decoration: BoxDecoration(
               gradient: LinearGradient(
-                colors: [
-                  darkGreen.withOpacity(0.9),
-                  Colors.transparent,
-                ],
+                colors: [darkGreen.withOpacity(0.9), Colors.transparent],
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
               ),
@@ -150,14 +164,21 @@ class _CustomerJelajahPageState extends State<CustomerJelajahPage> {
                     const SizedBox(width: 4),
                     Text(
                       "Jember", // Lokasi default yang relevan
-                      style: TextStyle(color: limeGreen, fontWeight: FontWeight.bold),
+                      style: TextStyle(
+                        color: limeGreen,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ],
                 ),
                 const SizedBox(height: 8),
                 const Text(
                   "Jelajahi Rute",
-                  style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold),
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
                 const SizedBox(height: 4),
                 const Text(
@@ -183,7 +204,11 @@ class _CustomerJelajahPageState extends State<CustomerJelajahPage> {
               ),
               borderRadius: BorderRadius.circular(20),
               boxShadow: [
-                BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 10, offset: const Offset(0, 5)),
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.1),
+                  blurRadius: 10,
+                  offset: const Offset(0, 5),
+                ),
               ],
             ),
             padding: const EdgeInsets.all(16),
@@ -194,11 +219,20 @@ class _CustomerJelajahPageState extends State<CustomerJelajahPage> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      _routes.isNotEmpty ? _routes[0].judulRute : "Rute Populer",
-                      style: TextStyle(color: darkGreen, fontWeight: FontWeight.bold, fontSize: 16),
+                      _routes.isNotEmpty
+                          ? _routes[0].judulRute
+                          : "Rute Populer",
+                      style: TextStyle(
+                        color: darkGreen,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
                     ),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 4,
+                      ),
                       decoration: BoxDecoration(
                         color: darkGreen,
                         borderRadius: BorderRadius.circular(12),
@@ -207,7 +241,10 @@ class _CustomerJelajahPageState extends State<CustomerJelajahPage> {
                         children: [
                           const Icon(Icons.star, color: Colors.amber, size: 12),
                           const SizedBox(width: 4),
-                          Text("Paling Populer", style: TextStyle(color: limeGreen, fontSize: 10)),
+                          Text(
+                            "Paling Populer",
+                            style: TextStyle(color: limeGreen, fontSize: 10),
+                          ),
                         ],
                       ),
                     ),
@@ -215,8 +252,13 @@ class _CustomerJelajahPageState extends State<CustomerJelajahPage> {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  _routes.isNotEmpty ? _routes[0].deskripsi : "Petualangan kuliner terfavorit dengan rating yang bagus",
-                  style: TextStyle(color: darkGreen.withOpacity(0.8), fontSize: 12),
+                  _routes.isNotEmpty
+                      ? _routes[0].deskripsi
+                      : "Petualangan kuliner terfavorit dengan rating yang bagus",
+                  style: TextStyle(
+                    color: darkGreen.withOpacity(0.8),
+                    fontSize: 12,
+                  ),
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                 ),
@@ -240,12 +282,23 @@ class _CustomerJelajahPageState extends State<CustomerJelajahPage> {
                     style: ElevatedButton.styleFrom(
                       backgroundColor: darkGreen,
                       foregroundColor: limeGreen,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 20,
+                        vertical: 8,
+                      ),
                     ),
-                    child: const Text("Mulai Sekarang", style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                    child: const Text(
+                      "Mulai Sekarang",
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                   ),
-                )
+                ),
               ],
             ),
           ),
@@ -257,7 +310,8 @@ class _CustomerJelajahPageState extends State<CustomerJelajahPage> {
   // --- KOMPONEN LIST RUTE ---
   Widget _buildRouteList() {
     return ListView.builder(
-      physics: const NeverScrollableScrollPhysics(), // Scroll mengikuti SingleChildScrollView luar
+      physics:
+          const NeverScrollableScrollPhysics(), // Scroll mengikuti SingleChildScrollView luar
       shrinkWrap: true,
       padding: const EdgeInsets.symmetric(horizontal: 16),
       itemCount: _routes.length,
@@ -268,19 +322,25 @@ class _CustomerJelajahPageState extends State<CustomerJelajahPage> {
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(16),
-            boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10)],
+            boxShadow: [
+              BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10),
+            ],
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // Gambar Thumbnail (Placeholder)
               ClipRRect(
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+                borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(16),
+                ),
                 child: Container(
                   height: 120,
                   width: double.infinity,
                   color: Colors.grey[300],
-                  child: const Center(child: Icon(Icons.image, color: Colors.grey, size: 40)),
+                  child: const Center(
+                    child: Icon(Icons.image, color: Colors.grey, size: 40),
+                  ),
                 ),
               ),
               Padding(
@@ -288,21 +348,46 @@ class _CustomerJelajahPageState extends State<CustomerJelajahPage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(route.judulRute, style: TextStyle(color: darkGreen, fontWeight: FontWeight.bold, fontSize: 16)),
+                    Text(
+                      route.judulRute,
+                      style: TextStyle(
+                        color: darkGreen,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
+                    ),
                     const SizedBox(height: 6),
-                    Text(route.deskripsi, style: const TextStyle(color: Colors.grey, fontSize: 12), maxLines: 2, overflow: TextOverflow.ellipsis),
+                    Text(
+                      route.deskripsi,
+                      style: const TextStyle(color: Colors.grey, fontSize: 12),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
                     const SizedBox(height: 12),
-                    
+
                     // Info Row
                     Row(
                       children: [
-                        const Icon(Icons.access_time, size: 14, color: Colors.grey),
+                        const Icon(
+                          Icons.access_time,
+                          size: 14,
+                          color: Colors.grey,
+                        ),
                         const SizedBox(width: 4),
-                        const Text("2-3 jam", style: TextStyle(fontSize: 12, color: Colors.grey)),
+                        const Text(
+                          "2-3 jam",
+                          style: TextStyle(fontSize: 12, color: Colors.grey),
+                        ),
                         const SizedBox(width: 12),
                         const Icon(Icons.route, size: 14, color: Colors.grey),
                         const SizedBox(width: 4),
-                        Text("${route.panjangRute} km", style: const TextStyle(fontSize: 12, color: Colors.grey)),
+                        Text(
+                          "${route.panjangRute} km",
+                          style: const TextStyle(
+                            fontSize: 12,
+                            color: Colors.grey,
+                          ),
+                        ),
                       ],
                     ),
                     const SizedBox(height: 16),
@@ -325,10 +410,15 @@ class _CustomerJelajahPageState extends State<CustomerJelajahPage> {
                         style: ElevatedButton.styleFrom(
                           backgroundColor: limeGreen,
                           foregroundColor: darkGreen,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(20),
+                          ),
                           padding: const EdgeInsets.symmetric(vertical: 12),
                         ),
-                        child: const Text("Lihat Detail Rute", style: TextStyle(fontWeight: FontWeight.bold)),
+                        child: const Text(
+                          "Lihat Detail Rute",
+                          style: TextStyle(fontWeight: FontWeight.bold),
+                        ),
                       ),
                     ),
                   ],
@@ -353,7 +443,9 @@ class _CustomerJelajahPageState extends State<CustomerJelajahPage> {
         return Card(
           elevation: 2,
           margin: const EdgeInsets.only(bottom: 12),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
           child: ListTile(
             contentPadding: const EdgeInsets.all(12),
             leading: Container(
@@ -365,7 +457,10 @@ class _CustomerJelajahPageState extends State<CustomerJelajahPage> {
               ),
               child: Icon(Icons.storefront, color: darkGreen),
             ),
-            title: Text(merchant.namaBisnis, style: TextStyle(fontWeight: FontWeight.bold, color: darkGreen)),
+            title: Text(
+              merchant.namaBisnis,
+              style: TextStyle(fontWeight: FontWeight.bold, color: darkGreen),
+            ),
             subtitle: Text(
               merchant.deskripsi ?? "Merchant Litera",
               maxLines: 1,
@@ -373,7 +468,11 @@ class _CustomerJelajahPageState extends State<CustomerJelajahPage> {
               style: const TextStyle(fontSize: 12),
             ),
             trailing: IconButton(
-              icon: const Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey),
+              icon: const Icon(
+                Icons.arrow_forward_ios,
+                size: 16,
+                color: Colors.grey,
+              ),
               onPressed: () {
                 // TODO: Navigasi ke Halaman Detail Merchant (jika sudah ada)
               },

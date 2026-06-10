@@ -156,7 +156,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
 
   @override
   Widget build(BuildContext context) {
-    const Color bgColor = Color(0xFFF0F4F3);
+    const Color bgColor = Color.fromARGB(255, 255, 255, 255);
     const Color darkText = Color(0xFF1A1A2E);
     const Color subtitleColor = Color(0xFF6B7280);
     const Color tealColor = Color(0xFF1A7A6D);

@@ -1,5 +1,5 @@
 class Api {
 
   static const String baseUrl =
-      "https://api-paaxpbm.onrender.com/api";
+      "https://api-litera-production.up.railway.app/api";
 }

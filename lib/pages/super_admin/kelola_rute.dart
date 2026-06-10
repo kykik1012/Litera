@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:litera/models/thematic_route.dart';
 import '../../services/thematic_service.dart'; 
 import 'tambah_rute.dart'; 
@@ -24,6 +25,9 @@ class _KelolaRutePageState extends State<KelolaRutePage> {
   List<RouteDetailModel> _allRouteDetails = []; 
   
   bool _isLoading = true;
+
+  static const Color tealDark = Color(0xFF145C54);
+  static const Color limeGreen = Color(0xFFB8E926);
 
   @override
   void initState() {
@@ -65,19 +69,25 @@ class _KelolaRutePageState extends State<KelolaRutePage> {
     bool confirm = await showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text(!route.isDelete ? "Hapus Rute?" : "Pulihkan Rute?"),
-        content: Text("Apakah Anda yakin ingin ${!route.isDelete ? 'menghapus' : 'memulihkan'} rute '${route.judulRute}'?"),
+        title: Text(!route.isDelete ? "Hapus Rute?" : "Pulihkan Rute?", style: GoogleFonts.poppins(fontWeight: FontWeight.bold)),
+        content: Text(
+          "Apakah Anda yakin ingin ${!route.isDelete ? 'menghapus' : 'memulihkan'} rute '${route.judulRute}'?",
+          style: GoogleFonts.poppins(),
+        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text("Batal", style: TextStyle(color: Colors.grey)),
+            child: Text("Batal", style: GoogleFonts.poppins(color: Colors.grey)),
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(context, true),
             style: ElevatedButton.styleFrom(
-              backgroundColor: !route.isDelete ? Colors.red : Colors.green,
+              backgroundColor: !route.isDelete ? Colors.red : limeGreen,
+              foregroundColor: !route.isDelete ? Colors.white : tealDark,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
             ),
-            child: const Text("Ya, Lanjutkan", style: TextStyle(color: Colors.white)),
+            child: Text("Ya, Lanjutkan", style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
           ),
         ],
       ),
@@ -101,7 +111,7 @@ class _KelolaRutePageState extends State<KelolaRutePage> {
 
   Widget _buildRouteList(List<ThematicRouteModel> routes) {
     if (routes.isEmpty) {
-      return const Center(child: Text("Tidak ada data rute tematik."));
+      return Center(child: Text("Tidak ada data rute tematik.", style: GoogleFonts.poppins(color: Colors.grey)));
     }
 
     return ListView.builder(
@@ -117,8 +127,13 @@ class _KelolaRutePageState extends State<KelolaRutePage> {
             .length;
 
         return Card(
-          elevation: 2,
+          elevation: 0,
+          color: Colors.white,
           margin: const EdgeInsets.only(bottom: 12),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+            side: BorderSide(color: Colors.grey.shade200),
+          ),
           child: ListTile(
             onTap: () async {
               // Gunakan await agar jika admin selesai menambah destinasi, halaman ini ter-refresh
@@ -134,15 +149,15 @@ class _KelolaRutePageState extends State<KelolaRutePage> {
               _fetchRoutes(); // Refresh data jika kembali dari detail rute
             },
             leading: CircleAvatar(
-              backgroundColor: !route.isDelete ? Colors.green : Colors.grey,
-              child: const Icon(Icons.alt_route, color: Colors.white),
+              backgroundColor: !route.isDelete ? limeGreen.withValues(alpha: 0.3) : Colors.grey.shade200,
+              child: Icon(Icons.alt_route, color: !route.isDelete ? tealDark : Colors.grey),
             ),
             title: Text(
               route.judulRute,
-              style: TextStyle(
+              style: GoogleFonts.poppins(
                 fontWeight: FontWeight.bold,
                 decoration: route.isDelete ? TextDecoration.lineThrough : null,
-                color: route.isDelete ? Colors.grey : Colors.black,
+                color: route.isDelete ? Colors.grey : const Color(0xFF1A1A2E),
               ),
             ),
             subtitle: Column(
@@ -153,6 +168,7 @@ class _KelolaRutePageState extends State<KelolaRutePage> {
                   "$jumlahDestinasi Destinasi • ${route.deskripsi}", 
                   maxLines: 2, 
                   overflow: TextOverflow.ellipsis,
+                  style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey[600]),
                 ),
               ],
             ),
@@ -160,7 +176,7 @@ class _KelolaRutePageState extends State<KelolaRutePage> {
               onPressed: () => _handleAction(route),
               icon: Icon(
                 !route.isDelete ? Icons.delete_outline : Icons.restore,
-                color: !route.isDelete ? Colors.red : Colors.green,
+                color: !route.isDelete ? Colors.red : tealDark,
               ),
             ),
           ),
@@ -177,21 +193,35 @@ class _KelolaRutePageState extends State<KelolaRutePage> {
     return DefaultTabController(
       length: 2,
       child: Scaffold(
+        backgroundColor: Colors.grey[50],
         appBar: AppBar(
-          title: const Text("Kelola Rute"),
-          bottom: const TabBar(
+          backgroundColor: Colors.white,
+          elevation: 0,
+          scrolledUnderElevation: 0,
+          centerTitle: true,
+          title: Text(
+            "Kelola Rute",
+            style: GoogleFonts.poppins(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: const Color(0xFF1A1A2E),
+            ),
+          ),
+          bottom: TabBar(
             isScrollable: false, 
-            labelColor: Colors.green,
+            labelColor: tealDark,
             unselectedLabelColor: Colors.grey,
-            indicatorColor: Colors.green,
-            tabs: [
+            indicatorColor: limeGreen,
+            labelStyle: GoogleFonts.poppins(fontWeight: FontWeight.w600),
+            unselectedLabelStyle: GoogleFonts.poppins(),
+            tabs: const [
               Tab(text: "Semua Rute"),
               Tab(text: "History"),
             ],
           ),
         ),
         body: _isLoading
-            ? const Center(child: CircularProgressIndicator())
+            ? const Center(child: CircularProgressIndicator(color: tealDark))
             : TabBarView(
                 children: [
                   _buildRouteList(listAktif),
@@ -201,8 +231,8 @@ class _KelolaRutePageState extends State<KelolaRutePage> {
         floatingActionButton: Padding(
           padding: const EdgeInsets.only(bottom: 70), 
           child: FloatingActionButton(
-            backgroundColor: Colors.green,
-            foregroundColor: Colors.white,
+            backgroundColor: tealDark,
+            foregroundColor: limeGreen,
             onPressed: () async { 
               final result = await Navigator.push(
                 context,

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:litera/models/merchant.dart';
 import '../../services/merchant_service.dart';
 import '../../services/route_detail_service.dart';
@@ -21,6 +22,9 @@ class _TambahRuteDetailPageState extends State<TambahRuteDetailPage> {
 
   List<MerchantModel> _merchants = [];
   bool _isLoading = true;
+
+  static const Color tealDark = Color(0xFF145C54);
+  static const Color limeGreen = Color(0xFFB8E926);
 
   @override
   void initState() {
@@ -52,17 +56,21 @@ class _TambahRuteDetailPageState extends State<TambahRuteDetailPage> {
     bool confirm = await showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text("Tambah ke Rute?"),
-        content: Text("Tambahkan '${merchant.namaBisnis}' ke dalam rute ini?"),
+        title: Text("Tambah ke Rute?", style: GoogleFonts.poppins(fontWeight: FontWeight.bold)),
+        content: Text("Tambahkan '${merchant.namaBisnis}' ke dalam rute ini?", style: GoogleFonts.poppins()),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text("Batal", style: TextStyle(color: Colors.grey)),
+            child: Text("Batal", style: GoogleFonts.poppins(color: Colors.grey)),
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(context, true),
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
-            child: const Text("Ya, Tambahkan", style: TextStyle(color: Colors.white)),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: tealDark,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            ),
+            child: Text("Ya, Tambahkan", style: GoogleFonts.poppins(color: limeGreen, fontWeight: FontWeight.w600)),
           ),
         ],
       ),
@@ -74,7 +82,7 @@ class _TambahRuteDetailPageState extends State<TambahRuteDetailPage> {
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (context) => const Center(child: CircularProgressIndicator(color: Colors.green)),
+      builder: (context) => const Center(child: CircularProgressIndicator(color: limeGreen)),
     );
 
     try {
@@ -110,32 +118,53 @@ class _TambahRuteDetailPageState extends State<TambahRuteDetailPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.grey[50],
       appBar: AppBar(
-        title: const Text("Pilih Merchant"),
+        backgroundColor: Colors.white,
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios_new, color: Color(0xFF1A1A2E), size: 20),
+          onPressed: () => Navigator.pop(context),
+        ),
+        centerTitle: true,
+        title: Text(
+          "Pilih Merchant",
+          style: GoogleFonts.poppins(
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+            color: const Color(0xFF1A1A2E),
+          ),
+        ),
       ),
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
+          ? const Center(child: CircularProgressIndicator(color: tealDark))
           : _merchants.isEmpty
-              ? const Center(child: Text("Tidak ada data merchant."))
+              ? Center(child: Text("Tidak ada data merchant.", style: GoogleFonts.poppins(color: Colors.grey)))
               : ListView.builder(
                   padding: const EdgeInsets.all(16),
                   itemCount: _merchants.length,
                   itemBuilder: (context, index) {
                     final merchant = _merchants[index];
                     return Card(
-                      elevation: 2,
+                      elevation: 0,
+                      color: Colors.white,
                       margin: const EdgeInsets.only(bottom: 12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        side: BorderSide(color: Colors.grey.shade200),
+                      ),
                       child: ListTile(
-                        leading: const CircleAvatar(
-                          backgroundColor: Colors.orange,
-                          child: Icon(Icons.storefront, color: Colors.white),
+                        leading: CircleAvatar(
+                          backgroundColor: limeGreen.withValues(alpha: 0.3),
+                          child: const Icon(Icons.storefront, color: tealDark),
                         ),
                         title: Text(
                           merchant.namaBisnis,
-                          style: const TextStyle(fontWeight: FontWeight.bold),
+                          style: GoogleFonts.poppins(fontWeight: FontWeight.bold, color: const Color(0xFF1A1A2E)),
                         ),
-                        subtitle: Text(merchant.deskripsi ?? "Tidak ada deskripsi", maxLines: 1, overflow: TextOverflow.ellipsis),
-                        trailing: const Icon(Icons.add_circle, color: Colors.green),
+                        subtitle: Text(merchant.deskripsi ?? "Tidak ada deskripsi", maxLines: 1, overflow: TextOverflow.ellipsis, style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey[600])),
+                        trailing: const Icon(Icons.add_circle, color: tealDark),
                         onTap: () => _addMerchantToRoute(merchant),
                       ),
                     );

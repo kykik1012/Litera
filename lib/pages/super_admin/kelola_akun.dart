@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../../models/user_model.dart';
 import '../../services/user_service.dart';
 
@@ -14,6 +15,9 @@ class _KelolaAkunPageState extends State<KelolaAkunPage> {
   
   List<UserModel> _allUsers = [];
   bool _isLoading = true;
+
+  static const Color tealDark = Color(0xFF145C54);
+  static const Color limeGreen = Color(0xFFB8E926);
 
   @override
   void initState() {
@@ -49,20 +53,24 @@ class _KelolaAkunPageState extends State<KelolaAkunPage> {
     bool confirm = await showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text(user.isActive ? "Nonaktifkan Akun?" : "Pulihkan Akun?"),
+        title: Text(user.isActive ? "Nonaktifkan Akun?" : "Pulihkan Akun?", style: GoogleFonts.poppins(fontWeight: FontWeight.bold)),
         content: Text(
-            "Apakah Anda yakin ingin ${user.isActive ? 'menghapus/menonaktifkan' : 'memulihkan'} akun ${user.name ?? user.namaBisnis ?? user.username}?"),
+            "Apakah Anda yakin ingin ${user.isActive ? 'menghapus/menonaktifkan' : 'memulihkan'} akun ${user.name ?? user.namaBisnis ?? user.username}?",
+            style: GoogleFonts.poppins()),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text("Batal", style: TextStyle(color: Colors.grey)),
+            child: Text("Batal", style: GoogleFonts.poppins(color: Colors.grey)),
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(context, true),
             style: ElevatedButton.styleFrom(
-              backgroundColor: user.isActive ? Colors.red : Colors.green,
+              backgroundColor: user.isActive ? Colors.red : limeGreen,
+              foregroundColor: user.isActive ? Colors.white : tealDark,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
             ),
-            child: const Text("Ya, Lanjutkan", style: TextStyle(color: Colors.white)),
+            child: Text("Ya, Lanjutkan", style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
           ),
         ],
       ),
@@ -95,7 +103,7 @@ class _KelolaAkunPageState extends State<KelolaAkunPage> {
   // Widget untuk menggambar List berdasarkan role yang difilter
   Widget _buildUserList(List<UserModel> users) {
     if (users.isEmpty) {
-      return const Center(child: Text("Tidak ada data pengguna."));
+      return Center(child: Text("Tidak ada data pengguna.", style: GoogleFonts.poppins(color: Colors.grey)));
     }
 
     return ListView.builder(
@@ -108,28 +116,33 @@ class _KelolaAkunPageState extends State<KelolaAkunPage> {
         final displayName = user.name ?? user.namaBisnis ?? user.username ?? "Unknown";
 
         return Card(
-          elevation: 2,
+          elevation: 0,
+          color: Colors.white,
           margin: const EdgeInsets.only(bottom: 12),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+            side: BorderSide(color: Colors.grey.shade200),
+          ),
           child: ListTile(
             leading: CircleAvatar(
-              backgroundColor: user.role == 1 ? Colors.orange : Colors.blue,
+              backgroundColor: user.role == 1 ? const Color(0xFFFFF4E5) : const Color(0xFFE5F0FF),
               child: Icon(
                 user.role == 1 ? Icons.store : Icons.person,
-                color: Colors.white,
+                color: user.role == 1 ? Colors.orange : Colors.blue,
               ),
             ),
             title: Text(
               displayName,
-              style: TextStyle(
+              style: GoogleFonts.poppins(
                 fontWeight: FontWeight.bold,
                 decoration: !user.isActive ? TextDecoration.lineThrough : null, // Coret nama jika dihapus
-                color: !user.isActive ? Colors.grey : Colors.black,
+                color: !user.isActive ? Colors.grey : const Color(0xFF1A1A2E),
               ),
             ),
             subtitle: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(user.email),
+                Text(user.email, style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey[600])),
                 const SizedBox(height: 4),
                 // Badge Status
                 Container(
@@ -140,8 +153,9 @@ class _KelolaAkunPageState extends State<KelolaAkunPage> {
                   ),
                   child: Text(
                     user.isActive ? "Aktif" : "Dinonaktifkan",
-                    style: TextStyle(
-                      fontSize: 12,
+                    style: GoogleFonts.poppins(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w600,
                       color: user.isActive ? Colors.green[800] : Colors.red[800],
                     ),
                   ),
@@ -152,7 +166,7 @@ class _KelolaAkunPageState extends State<KelolaAkunPage> {
               onPressed: () => _handleAction(user),
               icon: Icon(
                 user.isActive ? Icons.delete_outline : Icons.restore,
-                color: user.isActive ? Colors.red : Colors.green,
+                color: user.isActive ? Colors.red : tealDark,
               ),
             ),
           ),
@@ -178,28 +192,41 @@ class _KelolaAkunPageState extends State<KelolaAkunPage> {
     return DefaultTabController(
       length: 4, // Jumlah Tab diubah menjadi 4
       child: Scaffold(
+        backgroundColor: Colors.grey[50],
         appBar: AppBar(
-        title: const Text("Kelola Akun"),
-        bottom: const TabBar(
-          // Hapus atau jadikan isScrollable false agar ke-4 tab terbagi rata memenuhi layar
-          isScrollable: false, 
-          
-          labelColor: Colors.green,
-          unselectedLabelColor: Colors.grey,
-          indicatorColor: Colors.green,
-          // Opsional: Beri padding vertikal agar area sentuh tab lebih nyaman
-          padding: EdgeInsets.zero, 
-          indicatorSize: TabBarIndicatorSize.tab, // Agar garis hijau di bawah tab membentang penuh
-          tabs: [
-            Tab(text: "Semua"),
-            Tab(text: "Customer"),
-            Tab(text: "Merchant"),
-            Tab(text: "History"),
-          ],
+          backgroundColor: Colors.white,
+          elevation: 0,
+          scrolledUnderElevation: 0,
+          centerTitle: true,
+          title: Text(
+            "Kelola Akun",
+            style: GoogleFonts.poppins(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: const Color(0xFF1A1A2E),
+            ),
+          ),
+          bottom: TabBar(
+            // Hapus atau jadikan isScrollable false agar ke-4 tab terbagi rata memenuhi layar
+            isScrollable: false, 
+            labelColor: tealDark,
+            unselectedLabelColor: Colors.grey,
+            indicatorColor: limeGreen,
+            labelStyle: GoogleFonts.poppins(fontWeight: FontWeight.w600, fontSize: 13),
+            unselectedLabelStyle: GoogleFonts.poppins(fontSize: 13),
+            // Opsional: Beri padding vertikal agar area sentuh tab lebih nyaman
+            padding: EdgeInsets.zero, 
+            indicatorSize: TabBarIndicatorSize.tab, // Agar garis hijau di bawah tab membentang penuh
+            tabs: const [
+              Tab(text: "Semua"),
+              Tab(text: "Customer"),
+              Tab(text: "Merchant"),
+              Tab(text: "History"),
+            ],
+          ),
         ),
-      ),
         body: _isLoading
-            ? const Center(child: CircularProgressIndicator())
+            ? const Center(child: CircularProgressIndicator(color: tealDark))
             : TabBarView(
                 children: [
                   _buildUserList(listSemuaAktif), // Tab 1: Semua Aktif

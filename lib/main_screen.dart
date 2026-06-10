@@ -7,6 +7,7 @@ import 'package:litera/pages/super_admin/kelola_akun.dart';
 import 'package:litera/pages/super_admin/kelola_rute.dart';
 import 'package:litera/pages/super_admin/kelola_review.dart';
 import 'package:litera/pages/merchant/merchant_dashboard_page.dart';
+import 'package:litera/pages/merchant/merchant_usaha_page.dart';
 import 'package:litera/pages/customer/customer_dashboard_page.dart';
 import 'package:litera/pages/customer/customer_jelajah_page.dart';
 import 'package:litera/pages/profile/profile_page.dart';
@@ -55,7 +56,7 @@ class _MainScreenState extends State<MainScreen> {
     } else if (_userRole == 1) { // MERCHANT
       return [
         MerchantDashboardPage(),
-        const Center(child: Text("Halaman Usaha")),
+        const MerchantUsahaPage(),
         const Center(child: Text("Halaman Pindai Voucher")), // Tombol Tengah
         const Center(child: Text("Halaman Ulasan")),
         const ProfilePage(),
