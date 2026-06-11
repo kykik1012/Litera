@@ -352,12 +352,23 @@ class _CustomerDashboardPageState extends State<CustomerDashboardPage> {
         children: [
           ClipRRect(
             borderRadius: BorderRadius.circular(12),
-            child: Container(
-              width: 100,
-              height: 80,
-              color: Colors.grey[300],
-              child: const Icon(Icons.map, color: Colors.grey),
-            ),
+            child: _recommendedRoute!.imageUrl != null && _recommendedRoute!.imageUrl!.isNotEmpty
+                ? Image.network(
+                    _recommendedRoute!.imageUrl!,
+                    width: 100,
+                    height: 80,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) => Container(
+                      width: 100, height: 80, color: Colors.grey[300],
+                      child: const Icon(Icons.broken_image, color: Colors.grey),
+                    ),
+                  )
+                : Container(
+                    width: 100,
+                    height: 80,
+                    color: Colors.grey[300],
+                    child: const Icon(Icons.map, color: Colors.grey),
+                  ),
           ),
           const SizedBox(width: 12),
           Expanded(

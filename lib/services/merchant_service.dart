@@ -15,4 +15,16 @@ class MerchantService {
     
     return jsonDecode(response.body);
   }
+
+  // Mengambil detail merchant berdasarkan ID
+  Future<Map<String, dynamic>> getMerchantById(int id) async {
+    final headers = await ApiHelper.authHeaders();
+
+    final response = await http.get(
+      Uri.parse("${Api.baseUrl}/merchants/$id"),
+      headers: headers,
+    );
+
+    return jsonDecode(response.body);
+  }
 }

@@ -30,9 +30,10 @@ class _MerchantUsahaPageState extends State<MerchantUsahaPage> {
   bool _isLoading = true;
 
   // Warna tema
-  static const Color tealDark = Color(0xFF145C54);
+  static const Color tealDark = Color(0xFF0D3B2E);
+
   static const Color tealGradientEnd = Color(0xFF1A8A7A);
-  static const Color limeGreen = Color(0xFFB8E926);
+  static const Color limeGreen = Color(0xFFAEEA00);
 
   @override
   void initState() {
@@ -200,13 +201,9 @@ class _MerchantUsahaPageState extends State<MerchantUsahaPage> {
                 Container(
                   width: 52,
                   height: 52,
-                  decoration: BoxDecoration(
+                  decoration: const BoxDecoration(
                     shape: BoxShape.circle,
-                    color: Colors.white.withValues(alpha: 0.2),
-                    border: Border.all(
-                      color: Colors.white.withValues(alpha: 0.3),
-                      width: 2,
-                    ),
+                    color: Color(0xFFE8F5E9),
                   ),
                   child: _profilePicture != null
                       ? ClipOval(
@@ -217,14 +214,14 @@ class _MerchantUsahaPageState extends State<MerchantUsahaPage> {
                             height: 52,
                             errorBuilder: (c, e, s) => const Icon(
                               Icons.storefront_rounded,
-                              color: Colors.white70,
+                              color: tealDark,
                               size: 28,
                             ),
                           ),
                         )
                       : const Icon(
                           Icons.storefront_rounded,
-                          color: Colors.white70,
+                          color: tealDark,
                           size: 28,
                         ),
                 ),
@@ -313,18 +310,10 @@ class _MerchantUsahaPageState extends State<MerchantUsahaPage> {
             );
             _loadData(); // Refresh data after returning
           },
-          child: Container(
-            width: 34,
-            height: 34,
-            decoration: BoxDecoration(
-              color: Colors.grey[100],
-              shape: BoxShape.circle,
-            ),
-            child: Icon(
-              Icons.edit_outlined,
-              color: tealDark,
-              size: 18,
-            ),
+          child: Icon(
+            Icons.edit_square,
+            color: tealDark,
+            size: 26,
           ),
         ),
       ],
@@ -340,18 +329,9 @@ class _MerchantUsahaPageState extends State<MerchantUsahaPage> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             // Ilustrasi placeholder
-            Container(
-              width: 200,
+            Image.asset(
+              'assets/images/data_kosong.png',
               height: 200,
-              decoration: BoxDecoration(
-                color: Colors.grey[50],
-                shape: BoxShape.circle,
-              ),
-              child: Icon(
-                Icons.shopping_bag_outlined,
-                size: 80,
-                color: Colors.grey[300],
-              ),
             ),
             const SizedBox(height: 24),
             Text(
@@ -415,7 +395,7 @@ class _MerchantUsahaPageState extends State<MerchantUsahaPage> {
               bottomLeft: Radius.circular(14),
             ),
             child: SizedBox(
-              width: 110,
+              width: 120,
               height: 100,
               child: product.imageUrl != null && product.imageUrl!.isNotEmpty
                   ? Image.network(
@@ -488,18 +468,18 @@ class _MerchantUsahaPageState extends State<MerchantUsahaPage> {
                         ),
                         decoration: BoxDecoration(
                           color: product.isAvailable
-                              ? const Color(0xFF10B981).withValues(alpha: 0.1)
-                              : Colors.red.withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(20),
+                              ? limeGreen
+                              : Colors.grey[300],
+                          borderRadius: BorderRadius.circular(4),
                         ),
                         child: Text(
-                          product.isAvailable ? 'Tersedia' : 'Habis',
+                          product.isAvailable ? 'Tersedia' : 'Kosong',
                           style: GoogleFonts.poppins(
-                            fontSize: 11,
+                            fontSize: 10,
                             fontWeight: FontWeight.w600,
                             color: product.isAvailable
-                                ? const Color(0xFF10B981)
-                                : Colors.red,
+                                ? tealDark
+                                : Colors.grey[600],
                           ),
                         ),
                       ),

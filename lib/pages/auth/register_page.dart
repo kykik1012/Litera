@@ -2,7 +2,9 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import '../../helpers/shared_pref_helper.dart';
 import '../../services/auth_service.dart';
+import 'register_success_page.dart';
 
 class RegisterPage extends StatefulWidget {
   const RegisterPage({super.key});
@@ -81,13 +83,40 @@ class _RegisterPageState extends State<RegisterPage> {
       );
 
       if (response["success"] == true) {
+        // Lakukan auto-login di belakang layar
+        try {
+          final loginResponse = await authService.login(
+            username: usernameController.text.trim(),
+            password: passwordController.text,
+          );
+
+          if (loginResponse["success"] == true) {
+            final token = loginResponse["data"]["token"];
+            final user = loginResponse["data"]["user"];
+
+            // Simpan token dan data user ke Shared Preferences
+            await SharedPrefHelper.saveUserData(
+              token: token,
+              id: int.parse(user["id"].toString()),
+              username: user["username"].toString(),
+              email: user["email"].toString(),
+              role: int.parse(user["role"].toString()),
+            );
+          }
+        } catch (e) {
+          debugPrint("Auto-login failed: $e");
+        }
+
         if (!mounted) return;
 
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Register berhasil")),
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => RegisterSuccessPage(
+              name: nameController.text.trim(),
+            ),
+          ),
         );
-
-        Navigator.pop(context);
       } else {
         if (!mounted) return;
 
