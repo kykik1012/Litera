@@ -4,7 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../helpers/shared_pref_helper.dart';
 import '../../services/user_service.dart';
 import '../auth/login_page.dart';
-import 'edit_profile_page.dart';
+import 'customer_edit_profile_page.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
