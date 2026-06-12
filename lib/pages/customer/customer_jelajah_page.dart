@@ -3,7 +3,7 @@ import '../../models/merchant.dart';
 import '../../models/thematic_route.dart';
 import '../../services/merchant_service.dart';
 import '../../services/thematic_service.dart';
-import '../../services/review_service.dart'; // 1. IMPORT REVIEW SERVICE
+import '../../services/review_service.dart'; // IMPORT REVIEW SERVICE
 import 'customer_route_preview_page.dart';
 import 'customer_merchant_detail_page.dart';
 
@@ -22,7 +22,7 @@ class _CustomerJelajahPageState extends State<CustomerJelajahPage> {
   List<ThematicRouteModel> _routes = [];
   List<MerchantModel> _merchants = [];
   
-  // 2. VARIABEL PENYIMPAN RATA-RATA RATING
+  // VARIABEL PENYIMPAN RATA-RATA RATING
   Map<String, double> _merchantRatings = {}; 
   
   bool _isLoading = true;
@@ -40,7 +40,7 @@ class _CustomerJelajahPageState extends State<CustomerJelajahPage> {
   Future<void> _fetchData() async {
     setState(() => _isLoading = true);
     try {
-      // 3. PANGGIL KETIGA API BERSAMAAN
+      // PANGGIL KETIGA API BERSAMAAN
       final responses = await Future.wait([
         _routeService.getAllThematicRoutes(),
         _merchantService.getAllMerchants(),
@@ -162,12 +162,13 @@ class _CustomerJelajahPageState extends State<CustomerJelajahPage> {
           height: 250,
           width: double.infinity,
           decoration: BoxDecoration(
-            image: DecorationImage(
-              image: _routes.isNotEmpty && _routes[0].imageUrl != null && _routes[0].imageUrl!.isNotEmpty
-                  ? NetworkImage(_routes[0].imageUrl!)
-                  : const NetworkImage('https://images.unsplash.com/photo-1555899434-94d1368aa7af?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80'),
-              fit: BoxFit.cover,
-            ),
+            color: darkGreen, // DIPERBARUI: Warna dasar jika tidak ada gambar rute
+            image: _routes.isNotEmpty && _routes[0].imageUrl != null && _routes[0].imageUrl!.isNotEmpty
+                ? DecorationImage(
+                    image: NetworkImage(_routes[0].imageUrl!),
+                    fit: BoxFit.cover,
+                  )
+                : null, // DIPERBARUI: Tidak lagi menggunakan gambar acak dari internet
           ),
           child: Container(
             decoration: BoxDecoration(
@@ -264,6 +265,8 @@ class _CustomerJelajahPageState extends State<CustomerJelajahPage> {
                             builder: (context) => CustomerRoutePreviewPage(
                               thematicRouteId: int.parse(_routes[0].id),
                               judulRute: _routes[0].judulRute,
+                              // DIPERBARUI: Pastikan mengirimkan deskripsiRute jika di customer_route_preview_page.dart menjadikannya required
+                              deskripsiRute: _routes[0].deskripsi, 
                             ),
                           ),
                         );
@@ -318,15 +321,24 @@ class _CustomerJelajahPageState extends State<CustomerJelajahPage> {
                         errorBuilder: (context, error, stackTrace) => Container(
                           height: 120,
                           width: double.infinity,
-                          color: Colors.grey[300],
-                          child: const Icon(Icons.broken_image, color: Colors.grey, size: 40),
+                          color: limeGreen.withOpacity(0.2), // DIPERBARUI: Warna fallback lebih menyatu
+                          child: Icon(Icons.broken_image, color: darkGreen, size: 40),
                         ),
                       )
                     : Container(
                         height: 120,
                         width: double.infinity,
-                        color: Colors.grey[300],
-                        child: const Center(child: Icon(Icons.image, color: Colors.grey, size: 40)),
+                        color: limeGreen.withOpacity(0.2), // DIPERBARUI: Tampilan placeholder lebih cantik
+                        child: Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(Icons.alt_route, color: darkGreen, size: 40),
+                              const SizedBox(height: 4),
+                              Text("Rute Litera", style: TextStyle(color: darkGreen, fontSize: 12, fontWeight: FontWeight.bold)),
+                            ],
+                          ),
+                        ),
                       ),
               ),
               Padding(
@@ -349,6 +361,8 @@ class _CustomerJelajahPageState extends State<CustomerJelajahPage> {
                               builder: (context) => CustomerRoutePreviewPage(
                                 thematicRouteId: int.parse(route.id),
                                 judulRute: route.judulRute,
+                                // DIPERBARUI: Pastikan mengirimkan deskripsiRute
+                                deskripsiRute: route.deskripsi, 
                               ),
                             ),
                           );
@@ -386,7 +400,7 @@ class _CustomerJelajahPageState extends State<CustomerJelajahPage> {
       itemBuilder: (context, index) {
         final merchant = _merchants[index];
         
-        // 4. AMBIL RATA-RATA RATING UNTUK TOKO INI
+        // AMBIL RATA-RATA RATING UNTUK TOKO INI
         double avgRating = _merchantRatings[merchant.namaBisnis.toLowerCase()] ?? 0.0;
         // Format agar hanya menampilkan 1 angka di belakang koma (misal: 4.5). Jika 0, tampilkan 0.0
         String displayRating = avgRating.toStringAsFixed(1);
@@ -470,7 +484,7 @@ class _CustomerJelajahPageState extends State<CustomerJelajahPage> {
                               children: [
                                 const Icon(Icons.star, color: Colors.amber, size: 14),
                                 const SizedBox(width: 4),
-                                // 5. TAMPILKAN RATING DI SINI
+                                // TAMPILKAN RATING DI SINI
                                 Text(
                                   displayRating, 
                                   style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: darkGreen),

@@ -148,10 +148,27 @@ class _KelolaRutePageState extends State<KelolaRutePage> {
               );
               _fetchRoutes(); // Refresh data jika kembali dari detail rute
             },
-            leading: CircleAvatar(
-              backgroundColor: !route.isDelete ? limeGreen.withValues(alpha: 0.3) : Colors.grey.shade200,
-              child: Icon(Icons.alt_route, color: !route.isDelete ? tealDark : Colors.grey),
-            ),
+            leading: (route.imageUrl != null && route.imageUrl!.isNotEmpty)
+                ? ClipRRect(
+                    borderRadius: BorderRadius.circular(8),
+                    child: Image.network(
+                      route.imageUrl!,
+                      width: 50,
+                      height: 50,
+                      fit: BoxFit.cover,
+                      // Jika gambar gagal dimuat, tampilkan ikon default
+                      errorBuilder: (context, error, stackTrace) => CircleAvatar(
+                        backgroundColor: !route.isDelete ? limeGreen.withValues(alpha: 0.3) : Colors.grey.shade200,
+                        child: Icon(Icons.alt_route, color: !route.isDelete ? tealDark : Colors.grey),
+                      ),
+                    ),
+                  )
+                : CircleAvatar(
+                    backgroundColor: !route.isDelete ? limeGreen.withValues(alpha: 0.3) : Colors.grey.shade200,
+                    child: Icon(Icons.alt_route, color: !route.isDelete ? tealDark : Colors.grey),
+                  ),
+            // --------------------------------
+
             title: Text(
               route.judulRute,
               style: GoogleFonts.poppins(
@@ -172,12 +189,34 @@ class _KelolaRutePageState extends State<KelolaRutePage> {
                 ),
               ],
             ),
-            trailing: IconButton(
-              onPressed: () => _handleAction(route),
-              icon: Icon(
-                !route.isDelete ? Icons.delete_outline : Icons.restore,
-                color: !route.isDelete ? Colors.red : tealDark,
-              ),
+            trailing: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (!route.isDelete)
+                  IconButton(
+                    onPressed: () async {
+                      // --- KUNCI: KIRIM DATA RUTE YANG MAU DIEDIT ---
+                      final result = await Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => TambahRutePage(route: route), // Kirim data di sini
+                        ),
+                      );
+                      // ---------------------------------------------
+                      if (result == true) _fetchRoutes();
+                    },
+                    icon: const Icon(Icons.edit_outlined, color: tealDark),
+                  ),
+                
+                // Tombol Hapus / Restore
+                IconButton(
+                  onPressed: () => _handleAction(route),
+                  icon: Icon(
+                    !route.isDelete ? Icons.delete_outline : Icons.restore,
+                    color: !route.isDelete ? Colors.red : tealDark,
+                  ),
+                ),
+              ],
             ),
           ),
         );
@@ -231,12 +270,11 @@ class _KelolaRutePageState extends State<KelolaRutePage> {
         floatingActionButton: Padding(
           padding: const EdgeInsets.only(bottom: 70), 
           child: FloatingActionButton(
-            backgroundColor: tealDark,
-            foregroundColor: limeGreen,
             onPressed: () async { 
               final result = await Navigator.push(
                 context,
                 MaterialPageRoute(
+                  // Panggil TANPA mengirim data (route: null secara default)
                   builder: (context) => const TambahRutePage(), 
                 ),
               );

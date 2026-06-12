@@ -8,11 +8,13 @@ import 'customer_route_detail_page.dart';
 class CustomerRoutePreviewPage extends StatefulWidget {
   final int thematicRouteId;
   final String judulRute;
+  final String deskripsiRute; // <--- 1. TAMBAHAN VARIABEL BARU
 
   const CustomerRoutePreviewPage({
     super.key,
     required this.thematicRouteId,
     required this.judulRute,
+    required this.deskripsiRute, // <--- PASTIKAN INI REQUIRED
   });
 
   @override
@@ -86,11 +88,20 @@ class _CustomerRoutePreviewPageState extends State<CustomerRoutePreviewPage> {
                             style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Color(0xFF003D33)),
                           ),
                           const SizedBox(height: 8),
+                          
+                          // --- 2. TAMPILKAN DESKRIPSI DI SINI ---
+                          Text(
+                            widget.deskripsiRute,
+                            style: TextStyle(fontSize: 14, color: Colors.grey[800], height: 1.4),
+                          ),
+                          const SizedBox(height: 12),
+                          // --------------------------------------
+
                           Row(
                             children: [
                               const Icon(Icons.location_on, color: Colors.red, size: 16),
                               const SizedBox(width: 4),
-                              Text("${_routePoints.length} Destinasi Merchant", style: const TextStyle(color: Colors.grey)),
+                              Text("${_routePoints.length} Destinasi Merchant", style: const TextStyle(color: Colors.grey, fontWeight: FontWeight.bold)),
                             ],
                           ),
                         ],
@@ -161,12 +172,11 @@ class _CustomerRoutePreviewPageState extends State<CustomerRoutePreviewPage> {
             
             // Tombol Mulai Rute
             Expanded(
-              flex: 2, // Dibuat lebih lebar agar lebih menonjol
+              flex: 2, 
               child: ElevatedButton(
                 onPressed: _routePoints.isEmpty 
-                    ? null // Nonaktifkan jika tidak ada rute
+                    ? null 
                     : () {
-                        // Jika diklik Mulai, ganti halaman ini dengan halaman Peta
                         Navigator.pushReplacement(
                           context,
                           MaterialPageRoute(

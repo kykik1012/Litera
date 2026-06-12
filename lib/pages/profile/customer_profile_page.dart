@@ -271,17 +271,7 @@ class _ProfilePageState extends State<ProfilePage> {
                 },
               ),
 
-              _MenuItem(
-                icon: Icons.logout_rounded,
-                label: 'Keluar',
-                textColor: darkText,
-                subtitleColor: subtitleColor,
-                dividerColor: dividerColor,
-                showDivider: false,
-                onTap: () {
-                  _showLogoutDialog();
-                },
-              ),
+              
 
               _MenuItem(
                 icon: Icons.rate_review_outlined, // Ikon bintang/review
@@ -294,6 +284,18 @@ class _ProfilePageState extends State<ProfilePage> {
                     context,
                     MaterialPageRoute(builder: (_) => const CustomerMyReviewsPage()),
                   );
+                },
+              ),
+
+              _MenuItem(
+                icon: Icons.logout_rounded,
+                label: 'Keluar',
+                textColor: darkText,
+                subtitleColor: subtitleColor,
+                dividerColor: dividerColor,
+                showDivider: false,
+                onTap: () {
+                  _showLogoutDialog();
                 },
               ),
             ],

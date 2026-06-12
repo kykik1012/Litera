@@ -169,23 +169,71 @@ class _KelolaDetailMerchantReviewPageState extends State<KelolaDetailMerchantRev
                 
                 if (review.imageUrl != null && review.imageUrl!.isNotEmpty) ...[
                   const SizedBox(height: 12),
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(8),
-                    child: Image.network(
-                      review.imageUrl!,
-                      height: 150,
-                      width: double.infinity,
-                      fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) {
-                        return Container(
-                          height: 150,
-                          color: Colors.grey[200],
-                          child: const Center(child: Icon(Icons.broken_image, color: Colors.grey)),
-                        );
-                      },
+                  GestureDetector(
+                    onTap: () {
+                      // Munculkan Pop-up Gambar Layar Penuh
+                      showDialog(
+                        context: context,
+                        builder: (BuildContext context) {
+                          return Dialog(
+                            backgroundColor: Colors.transparent, // Latar belakang transparan
+                            insetPadding: EdgeInsets.zero, // Menghilangkan jarak tepi
+                            child: Stack(
+                              alignment: Alignment.center,
+                              children: [
+                                // Latar belakang gelap transparan
+                                Container(
+                                  width: double.infinity,
+                                  height: double.infinity,
+                                  color: Colors.black87,
+                                ),
+                                // Fitur cubit untuk Zoom (Interactive Viewer)
+                                InteractiveViewer(
+                                  panEnabled: true,
+                                  minScale: 0.5,
+                                  maxScale: 4.0,
+                                  child: Image.network(
+                                    review.imageUrl!,
+                                    fit: BoxFit.contain, // Gambar ditampilkan utuh
+                                    width: double.infinity,
+                                    height: double.infinity,
+                                  ),
+                                ),
+                                // Tombol Silang (Tutup)
+                                Positioned(
+                                  top: 40,
+                                  right: 20,
+                                  child: IconButton(
+                                    icon: const Icon(Icons.close, color: Colors.white, size: 32),
+                                    onPressed: () => Navigator.of(context).pop(),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          );
+                        },
+                      );
+                    },
+                    // Tampilan gambar kecil (Thumbnail) di daftar
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(8),
+                      child: Image.network(
+                        review.imageUrl!,
+                        height: 150,
+                        width: double.infinity,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) {
+                          return Container(
+                            height: 150,
+                            color: Colors.grey[200],
+                            child: const Center(child: Icon(Icons.broken_image, color: Colors.grey)),
+                          );
+                        },
+                      ),
                     ),
                   ),
                 ],
+                // ---------------------------------------------------------
               ],
             ),
           ),
