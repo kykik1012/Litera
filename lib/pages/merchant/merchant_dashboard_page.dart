@@ -5,9 +5,9 @@ import 'package:intl/intl.dart';
 import '../../helpers/shared_pref_helper.dart';
 import '../../services/user_service.dart';
 import '../../services/product_service.dart';
-
 import '../../models/product.dart';
 import 'merchant_edit_katalog_page.dart';
+import 'merchant_promo_bottomsheet.dart';
 
 class MerchantDashboardPage extends StatefulWidget {
   const MerchantDashboardPage({super.key});
@@ -20,20 +20,15 @@ class _MerchantDashboardPageState extends State<MerchantDashboardPage> {
   final UserService _userService = UserService();
   final ProductService _productService = ProductService();
 
-  // Merchant info
   String _namaBisnis = '';
   String? _profilePicture;
-
-  // Products
   List<ProductModel> _products = [];
   bool _isLoading = true;
   bool _isTokoActive = true;
 
-  // Warna tema
   static const Color tealDark = Color(0xFF0D3B2E);
   static const Color tealMid = Color(0xFF145C54);
   static const Color tealGradientEnd = Color(0xFF1A8A7A);
-  static const Color toggleActive = Color(0xFF2AAA8A);
   static const Color saldoCardColor = Color(0xFF17584F);
   static const Color promoCardColor = Color(0xFF1E6E5E);
   static const Color limeGreen = Color(0xFFAEEA00);
@@ -57,12 +52,10 @@ class _MerchantDashboardPageState extends State<MerchantDashboardPage> {
     try {
       final userId = await SharedPrefHelper.getUserId() ?? 0;
       if (userId == 0) return;
-
       final response = await _userService.getUserById(userId);
       if (response["success"] == true) {
         final data = response["data"];
         _namaBisnis = data["nama_bisnis"] ?? data["name"] ?? '';
-
         _profilePicture = data["profile_picture"];
       }
     } catch (e) {
@@ -75,11 +68,8 @@ class _MerchantDashboardPageState extends State<MerchantDashboardPage> {
       final response = await _productService.getAllProducts();
       if (response["success"] == true && response["data"] != null) {
         final List data = response["data"];
-
-        // Ambil nama bisnis merchant yang sedang login
         final userId = await SharedPrefHelper.getUserId() ?? 0;
         String? currentMerchantName;
-
         if (userId != 0) {
           try {
             final userResponse = await _userService.getUserById(userId);
@@ -88,11 +78,8 @@ class _MerchantDashboardPageState extends State<MerchantDashboardPage> {
             }
           } catch (_) {}
         }
-
         final allProducts =
             data.map((json) => ProductModel.fromJson(json)).toList();
-
-        // Filter produk milik merchant yang sedang login berdasarkan nama_bisnis
         if (currentMerchantName != null && currentMerchantName.isNotEmpty) {
           _products = allProducts
               .where((p) => p.namaBisnis == currentMerchantName)
@@ -107,12 +94,11 @@ class _MerchantDashboardPageState extends State<MerchantDashboardPage> {
   }
 
   String _formatCurrency(num price) {
-    final formatter = NumberFormat.currency(
+    return NumberFormat.currency(
       locale: 'id_ID',
       symbol: 'Rp ',
       decimalDigits: 0,
-    );
-    return formatter.format(price);
+    ).format(price);
   }
 
   @override
@@ -120,8 +106,7 @@ class _MerchantDashboardPageState extends State<MerchantDashboardPage> {
     return Scaffold(
       backgroundColor: Colors.grey[50],
       body: _isLoading
-          ? const Center(
-              child: CircularProgressIndicator(color: tealMid))
+          ? const Center(child: CircularProgressIndicator(color: tealMid))
           : RefreshIndicator(
               color: tealMid,
               onRefresh: _loadData,
@@ -130,18 +115,10 @@ class _MerchantDashboardPageState extends State<MerchantDashboardPage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // ── Header Area dengan gradient ──
                     _buildHeaderSection(),
-
-                    // ── Status Operasional Toko ──
                     _buildStatusOperasionalSection(),
-
-                    // ── Promo Kilat ──
                     _buildPromoKilatSection(),
-
-                    // ── Katalog Saya ──
                     _buildKatalogSection(),
-
                     const SizedBox(height: 100),
                   ],
                 ),
@@ -151,7 +128,7 @@ class _MerchantDashboardPageState extends State<MerchantDashboardPage> {
   }
 
   // ═══════════════════════════════════════════
-  // HEADER SECTION (Gradient + Saldo Card)
+  // HEADER SECTION
   // ═══════════════════════════════════════════
   Widget _buildHeaderSection() {
     return Container(
@@ -166,13 +143,11 @@ class _MerchantDashboardPageState extends State<MerchantDashboardPage> {
         bottom: false,
         child: Column(
           children: [
-            // Top bar: Merchant info + notification
             Padding(
               padding:
                   const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
               child: Row(
                 children: [
-                  // Merchant avatar
                   Container(
                     width: 48,
                     height: 48,
@@ -205,15 +180,12 @@ class _MerchantDashboardPageState extends State<MerchantDashboardPage> {
                           ),
                   ),
                   const SizedBox(width: 12),
-                  // Nama & deskripsi
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          _namaBisnis.isEmpty
-                              ? 'Nama Merchant'
-                              : _namaBisnis,
+                          _namaBisnis.isEmpty ? 'Nama Merchant' : _namaBisnis,
                           style: GoogleFonts.poppins(
                             fontSize: 18,
                             fontWeight: FontWeight.w700,
@@ -225,7 +197,6 @@ class _MerchantDashboardPageState extends State<MerchantDashboardPage> {
                           'Mari kelola dan pantau usahamu\nmulai hari ini.',
                           style: GoogleFonts.poppins(
                             fontSize: 12,
-                            fontWeight: FontWeight.w400,
                             color: Colors.white.withValues(alpha: 0.8),
                             height: 1.3,
                           ),
@@ -233,7 +204,6 @@ class _MerchantDashboardPageState extends State<MerchantDashboardPage> {
                       ],
                     ),
                   ),
-                  // Notification icon
                   Stack(
                     children: [
                       Container(
@@ -256,12 +226,9 @@ class _MerchantDashboardPageState extends State<MerchantDashboardPage> {
                           width: 18,
                           height: 18,
                           decoration: BoxDecoration(
-                            color: const Color(0xFFF59E0B), // Orange badge
+                            color: const Color(0xFFF59E0B),
                             shape: BoxShape.circle,
-                            border: Border.all(
-                              color: tealDark,
-                              width: 2,
-                            ),
+                            border: Border.all(color: tealDark, width: 2),
                           ),
                           child: Center(
                             child: Text(
@@ -280,8 +247,6 @@ class _MerchantDashboardPageState extends State<MerchantDashboardPage> {
                 ],
               ),
             ),
-
-            // Saldo Card
             Padding(
               padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
               child: _buildSaldoCard(),
@@ -308,7 +273,6 @@ class _MerchantDashboardPageState extends State<MerchantDashboardPage> {
       ),
       child: Column(
         children: [
-          // Top: Saldo row
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 14, 16, 10),
             child: Row(
@@ -361,17 +325,11 @@ class _MerchantDashboardPageState extends State<MerchantDashboardPage> {
               ],
             ),
           ),
-          // Divider
-          Container(
-            height: 1,
-            color: Colors.white.withValues(alpha: 0.1),
-          ),
-          // Bottom: Transaksi & Penjualan
+          Container(height: 1, color: Colors.white.withValues(alpha: 0.1)),
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 10),
             child: Row(
               children: [
-                // Transaksi hari ini
                 Expanded(
                   child: Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -382,7 +340,6 @@ class _MerchantDashboardPageState extends State<MerchantDashboardPage> {
                           'Transaksi hari ini',
                           style: GoogleFonts.poppins(
                             fontSize: 11,
-                            fontWeight: FontWeight.w400,
                             color: Colors.white.withValues(alpha: 0.7),
                           ),
                         ),
@@ -409,11 +366,8 @@ class _MerchantDashboardPageState extends State<MerchantDashboardPage> {
                               child: Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  const Icon(
-                                    Icons.trending_up,
-                                    color: Color(0xFF4ADE80),
-                                    size: 12,
-                                  ),
+                                  const Icon(Icons.trending_up,
+                                      color: Color(0xFF4ADE80), size: 12),
                                   const SizedBox(width: 2),
                                   Text(
                                     '0%',
@@ -432,13 +386,11 @@ class _MerchantDashboardPageState extends State<MerchantDashboardPage> {
                     ),
                   ),
                 ),
-                // Divider vertikal
                 Container(
                   width: 1,
                   height: 36,
                   color: Colors.white.withValues(alpha: 0.15),
                 ),
-                // Penjualan kotor hari ini
                 Expanded(
                   child: Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -449,7 +401,6 @@ class _MerchantDashboardPageState extends State<MerchantDashboardPage> {
                           'Penjualan kotor hari ini',
                           style: GoogleFonts.poppins(
                             fontSize: 11,
-                            fontWeight: FontWeight.w400,
                             color: Colors.white.withValues(alpha: 0.7),
                           ),
                         ),
@@ -506,9 +457,7 @@ class _MerchantDashboardPageState extends State<MerchantDashboardPage> {
             width: double.infinity,
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: _isTokoActive
-                  ? limeGreen
-                  : Colors.white,
+              color: _isTokoActive ? limeGreen : Colors.white,
               borderRadius: BorderRadius.circular(16),
               boxShadow: _isTokoActive
                   ? []
@@ -520,22 +469,17 @@ class _MerchantDashboardPageState extends State<MerchantDashboardPage> {
                       ),
                     ],
               border: Border.all(
-                color: _isTokoActive
-                    ? limeGreen
-                    : Colors.grey[200]!,
+                color: _isTokoActive ? limeGreen : Colors.grey[200]!,
                 width: 1,
               ),
             ),
             child: Row(
               children: [
-                // Ikon toko
                 Container(
                   width: 48,
                   height: 48,
                   decoration: BoxDecoration(
-                    color: _isTokoActive
-                        ? tealDark
-                        : Colors.blueGrey[600],
+                    color: _isTokoActive ? tealDark : Colors.blueGrey[600],
                     shape: BoxShape.circle,
                   ),
                   child: const Icon(
@@ -545,7 +489,6 @@ class _MerchantDashboardPageState extends State<MerchantDashboardPage> {
                   ),
                 ),
                 const SizedBox(width: 14),
-                // Info text
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -565,23 +508,18 @@ class _MerchantDashboardPageState extends State<MerchantDashboardPage> {
                         _isTokoActive ? 'Aktif' : 'Tidak Aktif',
                         style: GoogleFonts.poppins(
                           fontSize: 12,
-                          fontWeight: FontWeight.w400,
-                          color: _isTokoActive
-                              ? tealDark
-                              : Colors.grey[600],
+                          color: _isTokoActive ? tealDark : Colors.grey[600],
                         ),
                       ),
                     ],
                   ),
                 ),
-                // Toggle
                 Transform.scale(
                   scale: 1.1,
                   child: Switch(
                     value: _isTokoActive,
-                    onChanged: (value) {
-                      setState(() => _isTokoActive = value);
-                    },
+                    onChanged: (value) =>
+                        setState(() => _isTokoActive = value),
                     activeThumbColor: tealDark,
                     activeTrackColor: Colors.white,
                     inactiveThumbColor: Colors.grey[400],
@@ -624,7 +562,6 @@ class _MerchantDashboardPageState extends State<MerchantDashboardPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Content
             Padding(
               padding: const EdgeInsets.fromLTRB(18, 18, 18, 14),
               child: Column(
@@ -643,7 +580,6 @@ class _MerchantDashboardPageState extends State<MerchantDashboardPage> {
                     'Buat Promo Kilat, tarik pelanggan baru dan ramaikan usahamu.',
                     style: GoogleFonts.poppins(
                       fontSize: 12,
-                      fontWeight: FontWeight.w400,
                       color: Colors.white.withValues(alpha: 0.8),
                       height: 1.4,
                     ),
@@ -651,19 +587,21 @@ class _MerchantDashboardPageState extends State<MerchantDashboardPage> {
                 ],
               ),
             ),
-            // Button
             Padding(
               padding: const EdgeInsets.fromLTRB(18, 0, 18, 18),
               child: SizedBox(
                 width: double.infinity,
                 child: ElevatedButton.icon(
                   onPressed: () {
-                    // TODO: Navigate to buat promo
+                    showModalBottomSheet(
+                      context: context,
+                      isScrollControlled: true,
+                      backgroundColor: Colors.transparent,
+                      builder: (_) =>
+                          MerchantPromoBottomSheet(products: _products),
+                    );
                   },
-                  icon: const Icon(
-                    Icons.bolt_rounded,
-                    size: 20,
-                  ),
+                  icon: const Icon(Icons.bolt_rounded, size: 20),
                   label: Text(
                     'Buat Promo',
                     style: GoogleFonts.poppins(
@@ -698,7 +636,6 @@ class _MerchantDashboardPageState extends State<MerchantDashboardPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Header
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -718,7 +655,7 @@ class _MerchantDashboardPageState extends State<MerchantDashboardPage> {
                       builder: (context) => const MerchantEditKatalogPage(),
                     ),
                   );
-                  _loadData(); // Refresh data after returning
+                  _loadData();
                 },
                 child: Text(
                   'Lihat Semua',
@@ -732,18 +669,15 @@ class _MerchantDashboardPageState extends State<MerchantDashboardPage> {
             ],
           ),
           const SizedBox(height: 14),
-
-          // Product List
           _products.isEmpty
               ? _buildEmptyKatalog()
               : ListView.separated(
                   physics: const NeverScrollableScrollPhysics(),
                   shrinkWrap: true,
                   itemCount: _products.length > 5 ? 5 : _products.length,
-                  separatorBuilder: (_, _) => const SizedBox(height: 12),
-                  itemBuilder: (context, index) {
-                    return _buildProductCard(_products[index]);
-                  },
+                  separatorBuilder: (_, __) => const SizedBox(height: 12),
+                  itemBuilder: (context, index) =>
+                      _buildProductCard(_products[index]),
                 ),
         ],
       ),
@@ -814,7 +748,6 @@ class _MerchantDashboardPageState extends State<MerchantDashboardPage> {
       ),
       child: Row(
         children: [
-          // Gambar Produk
           ClipRRect(
             borderRadius: const BorderRadius.only(
               topLeft: Radius.circular(14),
@@ -829,24 +762,17 @@ class _MerchantDashboardPageState extends State<MerchantDashboardPage> {
                       fit: BoxFit.cover,
                       errorBuilder: (c, e, s) => Container(
                         color: Colors.grey[200],
-                        child: Icon(
-                          Icons.fastfood_rounded,
-                          color: Colors.grey[400],
-                          size: 32,
-                        ),
+                        child: Icon(Icons.fastfood_rounded,
+                            color: Colors.grey[400], size: 32),
                       ),
                     )
                   : Container(
                       color: Colors.grey[200],
-                      child: Icon(
-                        Icons.fastfood_rounded,
-                        color: Colors.grey[400],
-                        size: 32,
-                      ),
+                      child: Icon(Icons.fastfood_rounded,
+                          color: Colors.grey[400], size: 32),
                     ),
             ),
           ),
-          // Detail Produk
           Expanded(
             child: Padding(
               padding:
@@ -870,7 +796,6 @@ class _MerchantDashboardPageState extends State<MerchantDashboardPage> {
                     product.deskripsi,
                     style: GoogleFonts.poppins(
                       fontSize: 11,
-                      fontWeight: FontWeight.w400,
                       color: Colors.grey[500],
                     ),
                     maxLines: 2,
@@ -890,9 +815,7 @@ class _MerchantDashboardPageState extends State<MerchantDashboardPage> {
                       ),
                       Container(
                         padding: const EdgeInsets.symmetric(
-                          horizontal: 10,
-                          vertical: 4,
-                        ),
+                            horizontal: 10, vertical: 4),
                         decoration: BoxDecoration(
                           color: product.isAvailable
                               ? limeGreen

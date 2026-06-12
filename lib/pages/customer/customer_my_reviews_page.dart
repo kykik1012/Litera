@@ -3,6 +3,10 @@ import '../../models/review.dart';
 import '../../services/review_service.dart';
 import '../../helpers/shared_pref_helper.dart';
 import '../../services/user_service.dart';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
+import '../../constants/api.dart';
+import '../../helpers/api_helper.dart';
 
 // Import halaman edit yang akan kita buat di langkah 4
 
@@ -29,52 +33,63 @@ class _CustomerMyReviewsPageState extends State<CustomerMyReviewsPage> {
 
   Future<void> _fetchMyReviews() async {
     setState(() => _isLoading = true);
+    
     try {
-      // 1. Ambil ID dan Username dari Shared Preferences
+      // 1. Ambil User ID dari sesi login saat ini
       final int myUserId = await SharedPrefHelper.getUserId() ?? 0;
-      final String myUsername = await SharedPrefHelper.getUsername() ?? "";
-      String myFullName = "";
+      String myCustomerId = "";
 
-      // 2. Ambil Nama Lengkap dari API User (karena backend menyimpan nama, bukan username)
+      // 2. PROSES PERTAMA: Wajib mencari tahu Customer ID dari backend
       if (myUserId != 0) {
-        try {
-          final userResponse = await UserService().getUserById(myUserId);
-          if (userResponse['success'] == true) {
-            // Kita ambil data 'name' atau 'nama' dari respon API profil
-            myFullName = userResponse['data']['name'] ?? userResponse['data']['nama'] ?? "";
+        final customerRes = await http.get(
+          Uri.parse("${Api.baseUrl}/customers"), // Panggil API Customers
+          headers: await ApiHelper.authHeaders(),
+        );
+        final customerData = jsonDecode(customerRes.body);
+        
+        if (customerData['success'] == true) {
+          final List<dynamic> customersList = customerData['data'];
+          
+          // Cari profil customer yang user_id-nya cocok dengan akun yang sedang login
+          final myProfile = customersList.firstWhere(
+            (c) => c['user_id'].toString() == myUserId.toString(),
+            orElse: () => null,
+          );
+          
+          if (myProfile != null) {
+            myCustomerId = myProfile['id'].toString(); // Inilah Customer ID aslinya
           }
-        } catch (_) {
-          debugPrint("Gagal mengambil nama lengkap user");
         }
       }
 
-      // 3. Ambil semua ulasan
+      // --- ATURAN BLOKIR ---
+      // Jika Customer ID tidak ditemukan, langsung hentikan fungsi di sini.
+      // (Karena kalau belum jadi Customer, mustahil punya ulasan).
+      if (myCustomerId.isEmpty) {
+        setState(() {
+          _myReviews = [];
+          _isLoading = false;
+        });
+        return; 
+      }
+
+      // 3. PROSES KEDUA: Setelah Customer ID pasti di tangan, baru ambil ulasan
       final response = await _reviewService.getAllReviews();
       if (response['success'] == true) {
         final List<dynamic> data = response['data'];
         
         setState(() {
-          // 4. Saring berdasarkan Username ATAU Nama Lengkap
+          // 4. Saring dengan sangat ketat (Hanya ambil jika customerId persis sama dengan myCustomerId)
           _myReviews = data
               .map((json) => ReviewModel.fromJson(json))
-              .where((review) {
-                if (review.isDelete) return false; // Jangan tampilkan yang sudah dihapus
-                
-                final reviewName = review.customerName.toLowerCase();
-                
-                // Cek apakah nama di review sama dengan username ATAU sama dengan nama lengkap
-                final isMatchUsername = reviewName == myUsername.toLowerCase();
-                final isMatchFullName = myFullName.isNotEmpty && reviewName == myFullName.toLowerCase();
-                
-                return isMatchUsername || isMatchFullName;
-              })
+              .where((review) => !review.isDelete && review.customerId == myCustomerId) 
               .toList();
         });
       }
     } catch (e) {
       debugPrint("Gagal mengambil ulasan saya: $e");
     } finally {
-      setState(() => _isLoading = false);
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
