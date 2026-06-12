@@ -21,7 +21,6 @@ class _EditProfilePageState extends State<EditProfilePage> {
   bool isSaving = false;
 
   int userId = 0;
-  int role = 2;
 
   File? selectedImage;
   String? profilePicture;
@@ -29,11 +28,6 @@ class _EditProfilePageState extends State<EditProfilePage> {
   final nameController = TextEditingController();
   final passwordController = TextEditingController();
   final confirmPasswordController = TextEditingController();
-
-  // Merchant-only fields
-  final namaBisnisController = TextEditingController();
-  final deskripsiController = TextEditingController();
-  final tahunController = TextEditingController();
 
   bool _isPasswordHidden = true;
   bool _isConfirmPasswordHidden = true;
@@ -51,17 +45,8 @@ class _EditProfilePageState extends State<EditProfilePage> {
 
     if (response["success"] == true) {
       final data = response["data"];
-
-      role = int.parse(data["role"].toString());
       profilePicture = data["profile_picture"];
-
-      if (role == 2) {
-        nameController.text = data["name"] ?? "";
-      } else {
-        namaBisnisController.text = data["nama_bisnis"] ?? "";
-        deskripsiController.text = data["deskripsi"] ?? "";
-        tahunController.text = data["tahun_berdiri"]?.toString() ?? "";
-      }
+      nameController.text = data["name"] ?? "";
     }
 
     setState(() {
@@ -79,22 +64,17 @@ class _EditProfilePageState extends State<EditProfilePage> {
   }
 
   Future<void> saveProfile() async {
-    // Validate password match if user entered passwords
-    if (passwordController.text.isNotEmpty ||
-        confirmPasswordController.text.isNotEmpty) {
+    // Validasi konfirmasi password
+    if (passwordController.text.isNotEmpty || confirmPasswordController.text.isNotEmpty) {
       if (passwordController.text != confirmPasswordController.text) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text("Konfirmasi password tidak sesuai"),
-          ),
+          const SnackBar(content: Text("Konfirmasi password tidak sesuai")),
         );
         return;
       }
     }
 
-    setState(() {
-      isSaving = true;
-    });
+    setState(() => isSaving = true);
 
     try {
       if (selectedImage != null) {
@@ -104,21 +84,11 @@ class _EditProfilePageState extends State<EditProfilePage> {
         );
       }
 
-      Map<String, dynamic> response;
-
-      if (role == 2) {
-        response = await userService.updateCustomer(
-          id: userId,
-          name: nameController.text,
-        );
-      } else {
-        response = await userService.updateMerchant(
-          id: userId,
-          namaBisnis: namaBisnisController.text,
-          deskripsi: deskripsiController.text,
-          tahunBerdiri: int.parse(tahunController.text),
-        );
-      }
+      // Karena ini khusus Customer, kita langsung panggil updateCustomer
+      final response = await userService.updateCustomer(
+        id: userId,
+        name: nameController.text,
+      );
 
       if (!mounted) return;
 
@@ -135,11 +105,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
         SnackBar(content: Text(e.toString())),
       );
     } finally {
-      if (mounted) {
-        setState(() {
-          isSaving = false;
-        });
-      }
+      if (mounted) setState(() => isSaving = false);
     }
   }
 
@@ -148,9 +114,6 @@ class _EditProfilePageState extends State<EditProfilePage> {
     nameController.dispose();
     passwordController.dispose();
     confirmPasswordController.dispose();
-    namaBisnisController.dispose();
-    deskripsiController.dispose();
-    tahunController.dispose();
     super.dispose();
   }
 
@@ -167,9 +130,9 @@ class _EditProfilePageState extends State<EditProfilePage> {
     const Color bannerText = Color(0xFF145C54);
 
     if (isLoading) {
-      return Scaffold(
+      return const Scaffold(
         backgroundColor: bgColor,
-        body: const Center(child: CircularProgressIndicator()),
+        body: Center(child: CircularProgressIndicator()),
       );
     }
 
@@ -185,25 +148,17 @@ class _EditProfilePageState extends State<EditProfilePage> {
                 children: [
                   IconButton(
                     onPressed: () => Navigator.pop(context),
-                    icon: const Icon(
-                      Icons.chevron_left_rounded,
-                      size: 28,
-                      color: darkText,
-                    ),
+                    icon: const Icon(Icons.chevron_left_rounded, size: 28, color: darkText),
                   ),
                   Expanded(
                     child: Center(
                       child: Text(
                         'Edit Profil',
-                        style: GoogleFonts.poppins(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w600,
-                          color: darkText,
-                        ),
+                        style: GoogleFonts.poppins(fontSize: 18, fontWeight: FontWeight.w600, color: darkText),
                       ),
                     ),
                   ),
-                  const SizedBox(width: 48), // balance the back button
+                  const SizedBox(width: 48), 
                 ],
               ),
             ),
@@ -220,45 +175,28 @@ class _EditProfilePageState extends State<EditProfilePage> {
                     // ── Info Banner ──
                     Container(
                       width: double.infinity,
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 14,
-                      ),
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                       decoration: BoxDecoration(
                         color: bannerBg,
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Text(
                         'Cek datamu dan ubah jika perlu, lalu klik "Simpan".',
-                        style: GoogleFonts.poppins(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w400,
-                          color: bannerText,
-                        ),
+                        style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w400, color: bannerText),
                       ),
                     ),
-
                     const SizedBox(height: 24),
 
                     // ── Data Akun heading ──
                     Text(
                       'Data Akun',
-                      style: GoogleFonts.poppins(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w700,
-                        color: darkText,
-                      ),
+                      style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.w700, color: darkText),
                     ),
                     const SizedBox(height: 4),
                     Text(
                       'Pastikan Anda mengisi data dengan benar sebelum menyimpan, yaa.',
-                      style: GoogleFonts.poppins(
-                        fontSize: 13,
-                        color: subtitleColor,
-                        height: 1.5,
-                      ),
+                      style: GoogleFonts.poppins(fontSize: 13, color: subtitleColor, height: 1.5),
                     ),
-
                     const SizedBox(height: 24),
 
                     // ── Avatar with Edit ──
@@ -268,42 +206,21 @@ class _EditProfilePageState extends State<EditProfilePage> {
                           GestureDetector(
                             onTap: pickImage,
                             child: Container(
-                              width: 90,
-                              height: 90,
+                              width: 90, height: 90,
                               decoration: BoxDecoration(
                                 shape: BoxShape.circle,
                                 color: const Color(0xFFD4F0ED),
-                                border: Border.all(
-                                  color: const Color(0xFFB8E0DB),
-                                  width: 2,
-                                ),
+                                border: Border.all(color: const Color(0xFFB8E0DB), width: 2),
                               ),
                               child: ClipOval(
                                 child: selectedImage != null
-                                    ? Image.file(
-                                        selectedImage!,
-                                        fit: BoxFit.cover,
-                                        width: 90,
-                                        height: 90,
-                                      )
+                                    ? Image.file(selectedImage!, fit: BoxFit.cover, width: 90, height: 90)
                                     : profilePicture != null
                                         ? Image.network(
-                                            profilePicture!,
-                                            fit: BoxFit.cover,
-                                            width: 90,
-                                            height: 90,
-                                            errorBuilder: (_, __, ___) =>
-                                                const Icon(
-                                              Icons.person,
-                                              size: 44,
-                                              color: Color(0xFF145C54),
-                                            ),
+                                            profilePicture!, fit: BoxFit.cover, width: 90, height: 90,
+                                            errorBuilder: (_, __, ___) => const Icon(Icons.person, size: 44, color: Color(0xFF145C54)),
                                           )
-                                        : const Icon(
-                                            Icons.person,
-                                            size: 44,
-                                            color: Color(0xFF145C54),
-                                          ),
+                                        : const Icon(Icons.person, size: 44, color: Color(0xFF145C54)),
                               ),
                             ),
                           ),
@@ -312,95 +229,39 @@ class _EditProfilePageState extends State<EditProfilePage> {
                             onTap: pickImage,
                             child: Text(
                               'Edit',
-                              style: GoogleFonts.poppins(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w500,
-                                color: darkText,
-                              ),
+                              style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w500, color: darkText),
                             ),
                           ),
                         ],
                       ),
                     ),
-
                     const SizedBox(height: 28),
 
                     // ── Form Fields ──
-                    if (role == 2) ...[
-                      // Nama field
-                      _buildLabeledField(
-                        label: 'Nama',
-                        controller: nameController,
-                        hintText: 'Masukkan nama lengkap',
-                        suffixIcon: Icon(
-                          Icons.person_outline,
-                          color: inputHintColor,
-                          size: 22,
-                        ),
-                        darkText: darkText,
-                        inputHintColor: inputHintColor,
-                        underlineColor: underlineColor,
-                        tealColor: tealColor,
-                        subtitleColor: subtitleColor,
-                      ),
-                      const SizedBox(height: 20),
-                    ],
-
-                    if (role == 1) ...[
-                      _buildLabeledField(
-                        label: 'Nama Bisnis',
-                        controller: namaBisnisController,
-                        hintText: 'Masukkan nama bisnis',
-                        darkText: darkText,
-                        inputHintColor: inputHintColor,
-                        underlineColor: underlineColor,
-                        tealColor: tealColor,
-                        subtitleColor: subtitleColor,
-                      ),
-                      const SizedBox(height: 20),
-                      _buildLabeledField(
-                        label: 'Deskripsi',
-                        controller: deskripsiController,
-                        hintText: 'Masukkan deskripsi',
-                        darkText: darkText,
-                        inputHintColor: inputHintColor,
-                        underlineColor: underlineColor,
-                        tealColor: tealColor,
-                        subtitleColor: subtitleColor,
-                      ),
-                      const SizedBox(height: 20),
-                      _buildLabeledField(
-                        label: 'Tahun Berdiri',
-                        controller: tahunController,
-                        hintText: 'Masukkan tahun berdiri',
-                        keyboardType: TextInputType.number,
-                        darkText: darkText,
-                        inputHintColor: inputHintColor,
-                        underlineColor: underlineColor,
-                        tealColor: tealColor,
-                        subtitleColor: subtitleColor,
-                      ),
-                      const SizedBox(height: 20),
-                    ],
+                    _buildLabeledField(
+                      label: 'Nama Lengkap',
+                      controller: nameController,
+                      hintText: 'Masukkan nama lengkap',
+                      suffixIcon: const Icon(Icons.person_outline, color: inputHintColor, size: 22),
+                      darkText: darkText,
+                      inputHintColor: inputHintColor,
+                      underlineColor: underlineColor,
+                      tealColor: tealColor,
+                      subtitleColor: subtitleColor,
+                    ),
+                    const SizedBox(height: 20),
 
                     // Kata Sandi field
                     _buildLabeledField(
                       label: 'Kata Sandi',
                       controller: passwordController,
-                      hintText: 'Masukkan kata sandi baru',
+                      hintText: 'Masukkan kata sandi baru (Opsional)',
                       obscureText: _isPasswordHidden,
                       suffixIcon: GestureDetector(
-                        onTap: () {
-                          setState(() {
-                            _isPasswordHidden = !_isPasswordHidden;
-                          });
-                        },
+                        onTap: () => setState(() => _isPasswordHidden = !_isPasswordHidden),
                         child: Icon(
-                          _isPasswordHidden
-                              ? Icons.visibility_off_outlined
-                              : Icons.visibility_outlined,
-                          color: inputHintColor,
-                          size: 22,
+                          _isPasswordHidden ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                          color: inputHintColor, size: 22,
                         ),
                       ),
                       darkText: darkText,
@@ -418,18 +279,10 @@ class _EditProfilePageState extends State<EditProfilePage> {
                       hintText: 'Konfirmasi kata sandi baru',
                       obscureText: _isConfirmPasswordHidden,
                       suffixIcon: GestureDetector(
-                        onTap: () {
-                          setState(() {
-                            _isConfirmPasswordHidden =
-                                !_isConfirmPasswordHidden;
-                          });
-                        },
+                        onTap: () => setState(() => _isConfirmPasswordHidden = !_isConfirmPasswordHidden),
                         child: Icon(
-                          _isConfirmPasswordHidden
-                              ? Icons.visibility_off_outlined
-                              : Icons.visibility_outlined,
-                          color: inputHintColor,
-                          size: 22,
+                          _isConfirmPasswordHidden ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                          color: inputHintColor, size: 22,
                         ),
                       ),
                       darkText: darkText,
@@ -438,44 +291,31 @@ class _EditProfilePageState extends State<EditProfilePage> {
                       tealColor: tealColor,
                       subtitleColor: subtitleColor,
                     ),
-
                     const SizedBox(height: 40),
 
                     // ── Simpan button ──
                     SizedBox(
-                      width: double.infinity,
-                      height: 52,
+                      width: double.infinity, height: 52,
                       child: ElevatedButton(
                         onPressed: isSaving ? null : saveProfile,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: limeGreen,
-                          disabledBackgroundColor: limeGreen.withValues(alpha: 0.5),
+                          disabledBackgroundColor: limeGreen.withOpacity(0.5),
                           foregroundColor: darkText,
                           elevation: 0,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(30),
-                          ),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
                         ),
                         child: isSaving
                             ? const SizedBox(
-                                height: 22,
-                                width: 22,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2.5,
-                                  color: Color(0xFF1A1A2E),
-                                ),
+                                height: 22, width: 22,
+                                child: CircularProgressIndicator(strokeWidth: 2.5, color: Color(0xFF1A1A2E)),
                               )
                             : Text(
                                 'Simpan',
-                                style: GoogleFonts.poppins(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w600,
-                                  color: darkText,
-                                ),
+                                style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.w600, color: darkText),
                               ),
                       ),
                     ),
-
                     const SizedBox(height: 32),
                   ],
                 ),
@@ -506,34 +346,20 @@ class _EditProfilePageState extends State<EditProfilePage> {
       children: [
         Text(
           label,
-          style: GoogleFonts.poppins(
-            fontSize: 12,
-            fontWeight: FontWeight.w400,
-            color: subtitleColor,
-          ),
+          style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w400, color: subtitleColor),
         ),
         TextField(
           controller: controller,
           obscureText: obscureText,
           keyboardType: keyboardType,
-          style: GoogleFonts.poppins(
-            fontSize: 15,
-            color: darkText,
-          ),
+          style: GoogleFonts.poppins(fontSize: 15, color: darkText),
           decoration: InputDecoration(
             hintText: hintText,
-            hintStyle: GoogleFonts.poppins(
-              fontSize: 15,
-              color: inputHintColor,
-            ),
+            hintStyle: GoogleFonts.poppins(fontSize: 15, color: inputHintColor),
             suffixIcon: suffixIcon,
             border: InputBorder.none,
-            enabledBorder: UnderlineInputBorder(
-              borderSide: BorderSide(color: underlineColor, width: 1),
-            ),
-            focusedBorder: UnderlineInputBorder(
-              borderSide: BorderSide(color: tealColor, width: 2),
-            ),
+            enabledBorder: UnderlineInputBorder(borderSide: BorderSide(color: underlineColor, width: 1)),
+            focusedBorder: UnderlineInputBorder(borderSide: BorderSide(color: tealColor, width: 2)),
             contentPadding: const EdgeInsets.symmetric(vertical: 12),
           ),
         ),

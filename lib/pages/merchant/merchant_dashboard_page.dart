@@ -46,10 +46,12 @@ class _MerchantDashboardPageState extends State<MerchantDashboardPage> {
 
   Future<void> _loadData() async {
     setState(() => _isLoading = true);
-    await Future.wait([
-      _loadMerchantProfile(),
-      _loadProducts(),
-    ]);
+    
+    // UBAH: Panggil profil DULU, baru produk. 
+    // Agar produk bisa difilter menggunakan nama bisnis yang sudah didapat.
+    await _loadMerchantProfile();
+    await _loadProducts();
+    
     if (mounted) setState(() => _isLoading = false);
   }
 
@@ -58,15 +60,15 @@ class _MerchantDashboardPageState extends State<MerchantDashboardPage> {
       final userId = await SharedPrefHelper.getUserId() ?? 0;
       if (userId == 0) return;
       
-      // 1. Ambil nama dan foto profil dari UserService
+      // 1. Ambil data dasar (nama user & foto default) dari tabel Users
       final response = await _userService.getUserById(userId);
       if (response["success"] == true) {
         final data = response["data"];
-        _namaBisnis = data["nama_bisnis"] ?? data["name"] ?? '';
+        _namaBisnis = data["name"] ?? ''; // Set default ke nama user
         _profilePicture = data["profile_picture"];
       }
 
-      // 2. Ambil Merchant ID dan Status saat ini dari MerchantService
+      // 2. Ambil data spesifik dari tabel Merchant (Prioritas Utama!)
       final merchantRes = await _merchantService.getAllMerchants();
       if (merchantRes['success'] == true) {
         final List<dynamic> mList = merchantRes['data'];
@@ -77,8 +79,19 @@ class _MerchantDashboardPageState extends State<MerchantDashboardPage> {
         
         if (myMerchant != null) {
           _merchantId = myMerchant['id'].toString();
-          // Sesuaikan posisi switch dengan data dari server
           _isTokoActive = (myMerchant['status']?.toString().toLowerCase() == 'buka'); 
+
+          // --- DIPERBARUI: Timpa nama dengan data dari API Merchant ---
+          if (myMerchant['nama_bisnis'] != null && myMerchant['nama_bisnis'].toString().isNotEmpty) {
+            _namaBisnis = myMerchant['nama_bisnis'].toString();
+          }
+
+          // Cek jika merchant punya foto profil/image_url spesifik
+          if (myMerchant['profile_picture'] != null && myMerchant['profile_picture'].toString().isNotEmpty) {
+             _profilePicture = myMerchant['profile_picture'].toString();
+          } else if (myMerchant['image_url'] != null && myMerchant['image_url'].toString().isNotEmpty) {
+             _profilePicture = myMerchant['image_url'].toString();
+          }
         }
       }
     } catch (e) {
@@ -91,21 +104,12 @@ class _MerchantDashboardPageState extends State<MerchantDashboardPage> {
       final response = await _productService.getAllProducts();
       if (response["success"] == true && response["data"] != null) {
         final List data = response["data"];
-        final userId = await SharedPrefHelper.getUserId() ?? 0;
-        String? currentMerchantName;
-        if (userId != 0) {
-          try {
-            final userResponse = await _userService.getUserById(userId);
-            if (userResponse["success"] == true) {
-              currentMerchantName = userResponse["data"]["nama_bisnis"];
-            }
-          } catch (_) {}
-        }
-        final allProducts =
-            data.map((json) => ProductModel.fromJson(json)).toList();
-        if (currentMerchantName != null && currentMerchantName.isNotEmpty) {
+        final allProducts = data.map((json) => ProductModel.fromJson(json)).toList();
+        
+        // DIPERBARUI: Gunakan _namaBisnis yang baru saja berhasil diambil
+        if (_namaBisnis.isNotEmpty) {
           _products = allProducts
-              .where((p) => p.namaBisnis == currentMerchantName)
+              .where((p) => p.namaBisnis.toLowerCase() == _namaBisnis.toLowerCase())
               .toList();
         } else {
           _products = allProducts;

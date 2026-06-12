@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import '../../helpers/shared_pref_helper.dart';
 import '../../services/user_service.dart';
 import '../../services/product_service.dart';
+import '../../services/merchant_service.dart'; // <--- TAMBAHAN IMPORT
 import '../../models/product.dart';
 import 'merchant_tambah_produk_page.dart';
 import 'merchant_edit_katalog_page.dart';
@@ -19,6 +20,7 @@ class MerchantUsahaPage extends StatefulWidget {
 class _MerchantUsahaPageState extends State<MerchantUsahaPage> {
   final UserService _userService = UserService();
   final ProductService _productService = ProductService();
+  final MerchantService _merchantService = MerchantService(); // <--- TAMBAHAN SERVICE
 
   // Merchant info
   String _namaBisnis = '';
@@ -31,7 +33,6 @@ class _MerchantUsahaPageState extends State<MerchantUsahaPage> {
 
   // Warna tema
   static const Color tealDark = Color(0xFF0D3B2E);
-
   static const Color tealGradientEnd = Color(0xFF1A8A7A);
   static const Color limeGreen = Color(0xFFAEEA00);
 
@@ -43,10 +44,11 @@ class _MerchantUsahaPageState extends State<MerchantUsahaPage> {
 
   Future<void> _loadData() async {
     setState(() => _isLoading = true);
-    await Future.wait([
-      _loadMerchantProfile(),
-      _loadProducts(),
-    ]);
+    
+    // --- DIPERBARUI: Wajib _loadMerchantProfile() dulu agar nama bisnis didapat ---
+    await _loadMerchantProfile();
+    await _loadProducts();
+    
     if (mounted) setState(() => _isLoading = false);
   }
 
@@ -55,12 +57,37 @@ class _MerchantUsahaPageState extends State<MerchantUsahaPage> {
       final userId = await SharedPrefHelper.getUserId() ?? 0;
       if (userId == 0) return;
 
+      // 1. Ambil data dasar (nama default) dari UserService
       final response = await _userService.getUserById(userId);
       if (response["success"] == true) {
         final data = response["data"];
-        _namaBisnis = data["nama_bisnis"] ?? data["name"] ?? '';
-        _deskripsi = data["deskripsi"] ?? '';
+        _namaBisnis = data["name"] ?? '';
         _profilePicture = data["profile_picture"];
+      }
+
+      // 2. Ambil Nama Bisnis & Deskripsi dari MerchantService (Prioritas Utama)
+      final merchantRes = await _merchantService.getAllMerchants();
+      if (merchantRes['success'] == true) {
+        final List<dynamic> mList = merchantRes['data'];
+        final myMerchant = mList.firstWhere(
+          (m) => m['user_id'].toString() == userId.toString(),
+          orElse: () => null,
+        );
+
+        if (myMerchant != null) {
+          if (myMerchant['nama_bisnis'] != null && myMerchant['nama_bisnis'].toString().isNotEmpty) {
+             _namaBisnis = myMerchant['nama_bisnis'].toString();
+          }
+          if (myMerchant['deskripsi'] != null) {
+             _deskripsi = myMerchant['deskripsi'].toString();
+          }
+          
+          if (myMerchant['profile_picture'] != null && myMerchant['profile_picture'].toString().isNotEmpty) {
+             _profilePicture = myMerchant['profile_picture'].toString();
+          } else if (myMerchant['image_url'] != null && myMerchant['image_url'].toString().isNotEmpty) {
+             _profilePicture = myMerchant['image_url'].toString();
+          }
+        }
       }
     } catch (e) {
       debugPrint("Error loading merchant profile: $e");
@@ -72,26 +99,12 @@ class _MerchantUsahaPageState extends State<MerchantUsahaPage> {
       final response = await _productService.getAllProducts();
       if (response["success"] == true && response["data"] != null) {
         final List data = response["data"];
-        
-        // Ambil nama bisnis merchant yang sedang login
-        final userId = await SharedPrefHelper.getUserId() ?? 0;
-        String? currentMerchantName;
-        
-        if (userId != 0) {
-          try {
-            final userResponse = await _userService.getUserById(userId);
-            if (userResponse["success"] == true) {
-              currentMerchantName = userResponse["data"]["nama_bisnis"];
-            }
-          } catch (_) {}
-        }
-
         final allProducts = data.map((json) => ProductModel.fromJson(json)).toList();
         
-        // Filter produk milik merchant yang sedang login berdasarkan nama_bisnis
-        if (currentMerchantName != null && currentMerchantName.isNotEmpty) {
+        // --- DIPERBARUI: Saring produk pakai variabel _namaBisnis ---
+        if (_namaBisnis.isNotEmpty) {
           _products = allProducts
-              .where((p) => p.namaBisnis == currentMerchantName)
+              .where((p) => p.namaBisnis.toLowerCase() == _namaBisnis.toLowerCase())
               .toList();
         } else {
           _products = allProducts;
@@ -241,7 +254,7 @@ class _MerchantUsahaPageState extends State<MerchantUsahaPage> {
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        _deskripsi.isEmpty ? 'Alamat Merchant' : _deskripsi,
+                        _deskripsi.isEmpty ? 'Alamat / Deskripsi Usaha' : _deskripsi,
                         style: GoogleFonts.poppins(
                           fontSize: 12,
                           fontWeight: FontWeight.w400,
@@ -310,7 +323,7 @@ class _MerchantUsahaPageState extends State<MerchantUsahaPage> {
             );
             _loadData(); // Refresh data after returning
           },
-          child: Icon(
+          child: const Icon(
             Icons.edit_square,
             color: tealDark,
             size: 26,
@@ -332,6 +345,7 @@ class _MerchantUsahaPageState extends State<MerchantUsahaPage> {
             Image.asset(
               'assets/images/data_kosong.png',
               height: 200,
+              errorBuilder: (context, error, stackTrace) => Icon(Icons.inventory_2_outlined, size: 80, color: Colors.grey[300]),
             ),
             const SizedBox(height: 24),
             Text(

@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../helpers/shared_pref_helper.dart';
 import '../../services/user_service.dart';
 import '../auth/login_page.dart';
+import 'merchant_edit_profile_page.dart';
 
 class MerchantProfilePage extends StatefulWidget {
   const MerchantProfilePage({super.key});
@@ -267,7 +268,24 @@ class _MerchantProfilePageState extends State<MerchantProfilePage> {
           SizedBox(
             width: double.infinity,
             child: ElevatedButton(
-              onPressed: () {},
+              
+              // --- UBAH BAGIAN INI ---
+              onPressed: () async {
+                // Menunggu halaman edit ditutup
+                final result = await Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const MerchantEditProfilePage(),
+                  ),
+                );
+                
+                // Jika hasilnya true (artinya ada perubahan yang disimpan), refresh data profil
+                if (result == true) {
+                  _loadUser();
+                }
+              },
+              // -----------------------
+              
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.white,
                 foregroundColor: tealDark,

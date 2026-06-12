@@ -63,43 +63,28 @@ class UserService {
   }
 
   // UPDATE MERCHANT
-  Future<Map<String, dynamic>>
-  updateMerchant({
-
+  Future<Map<String, dynamic>> updateMerchant({
     required int id,
     required String namaBisnis,
     required String deskripsi,
-    required int tahunBerdiri,
-
+    required String usahaDidirikan, // Diubah dari int tahunBerdiri ke String format tanggal (YYYY-MM-DD)
+    required String jamBuka,        // Tambahan parameter baru
+    required String jamTutup,       // Tambahan parameter baru
   }) async {
-
-    final response =
-        await http.put(
-
-      Uri.parse(
-        "${Api.baseUrl}/users/$id",
-      ),
-
-      headers:
-          await ApiHelper
-              .authHeaders(),
-
+    final response = await http.put(
+      Uri.parse("${Api.baseUrl}/users/$id"),
+      headers: await ApiHelper.authHeaders(),
       body: jsonEncode({
-
-        "nama_bisnis":
-            namaBisnis,
-
-        "deskripsi":
-            deskripsi,
-
-        "tahun_berdiri":
-            tahunBerdiri,
+        "nama_bisnis": namaBisnis,
+        "deskripsi": deskripsi,
+        // Sesuaikan dengan key JSON yang diminta backend temanmu:
+        "usaha_didirikan": usahaDidirikan, 
+        "jam_buka": jamBuka,
+        "jam_tutup": jamTutup,
       }),
     );
 
-    return jsonDecode(
-      response.body,
-    );
+    return jsonDecode(response.body);
   }
 
   // UPLOAD PROFILE PICTURE

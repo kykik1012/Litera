@@ -7,6 +7,7 @@ import '../../services/review_service.dart';
 import 'package:litera/models/product.dart'; 
 import '../../services/product_service.dart'; 
 import 'customer_single_route_page.dart';
+import 'package:intl/intl.dart';
 
 // --- 1. TAMBAHKAN IMPORT HALAMAN FORM ULASAN ---
 import 'customer_add_review_page.dart'; 
@@ -26,9 +27,6 @@ class CustomerMerchantDetailPage extends StatefulWidget {
 class _CustomerMerchantDetailPageState extends State<CustomerMerchantDetailPage> {
   final ReviewService _reviewService = ReviewService();
   final ProductService _productService = ProductService(); 
-  
-  // Variabel form (_reviewController, dll) dan fungsi dispose() sudah DIHAPUS 
-  // karena dipindah ke customer_add_review_page.dart
   
   List<ReviewModel> _merchantReviews = [];
   List<ProductModel> _merchantProducts = []; 
@@ -194,6 +192,14 @@ class _CustomerMerchantDetailPageState extends State<CustomerMerchantDetailPage>
 
   // --- WIDGET HERO HEADER ---
   Widget _buildHeroHeader() {
+    // ========================================================
+    // LOGIKA VARIABEL DIPINDAHKAN KE SINI (DI ATAS RETURN)
+    // ========================================================
+    String tanggalBerdiri = "Tidak diketahui";
+    if (widget.merchant.usahaDidirikan != null) {
+      tanggalBerdiri = DateFormat('dd MMMM yyyy', 'id_ID').format(widget.merchant.usahaDidirikan!);
+    }
+
     return Stack(
       fit: StackFit.expand,
       children: [
@@ -222,11 +228,33 @@ class _CustomerMerchantDetailPageState extends State<CustomerMerchantDetailPage>
                 style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 4),
-              Text(
-                "Berdiri sejak tahun: ${widget.merchant.tahunBerdiri ?? 'Tidak diketahui'}",
-                style: TextStyle(color: limeGreen, fontSize: 13, fontWeight: FontWeight.w500),
-              ),
+              
+              // ========================================================
+              // TAMPILAN WIDGET TANGGAL & JAM OPERASIONAL
+              // ========================================================
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    "Berdiri sejak: $tanggalBerdiri",
+                    style: const TextStyle(color: Colors.amber, fontSize: 12),
+                  ),
+                  const SizedBox(height: 4),
+                  Row(
+                    children: [
+                      const Icon(Icons.access_time, color: Colors.white70, size: 14),
+                      const SizedBox(width: 4),
+                      Text(
+                        "Jam Operasional: ${widget.merchant.jamBuka ?? '-'} s.d ${widget.merchant.jamTutup ?? '-'}",
+                        style: const TextStyle(color: Colors.white70, fontSize: 12),
+                      ),
+                    ],
+                  ),
+                ],
+              ), // <--- Koma ini sebelumnya terlewat
+              
               const Divider(color: Colors.white24, height: 20),
+              
               Text(
                 widget.merchant.deskripsi ?? "Merchant Litera terpercaya dengan produk kualitas terbaik.",
                 style: const TextStyle(color: Colors.white70, fontSize: 13),
@@ -248,45 +276,44 @@ class _CustomerMerchantDetailPageState extends State<CustomerMerchantDetailPage>
                   ),
                 ],
               ),
-              const SizedBox(height: 20), // Beri jarak sedikit
+              const SizedBox(height: 20), 
                     
-                    // --- TAMBAHKAN TOMBOL RUTE DI SINI ---
-                    SizedBox(
-                      width: double.infinity, // Agar tombol memenuhi lebar layar
-                      child: ElevatedButton.icon(
-                        onPressed: () {
-                          // Cek apakah koordinatnya ada
-                          if (widget.merchant.latitude != null && widget.merchant.longitude != null) {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => CustomerSingleRoutePage(
-                                  merchant: widget.merchant, 
-                                ),
-                              ),
-                            );
-                          } else {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text("Lokasi merchant ini belum diatur oleh Admin.")),
-                            );
-                          }
-                        },
-                        icon: const Icon(Icons.navigation, size: 20),
-                        label: const Text(
-                          "Lihat Rute Lokasi",
-                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
-                        ),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFFAEEA00), // Warna Hijau Stabilo (Lime Green)
-                          foregroundColor: const Color(0xFF003D33), // Teks warna Hijau Tua
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
+              // --- TOMBOL RUTE ---
+              SizedBox(
+                width: double.infinity, 
+                child: ElevatedButton.icon(
+                  onPressed: () {
+                    if (widget.merchant.latitude != null && widget.merchant.longitude != null) {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => CustomerSingleRoutePage(
+                            merchant: widget.merchant, 
                           ),
-                          elevation: 0,
                         ),
-                      ),
+                      );
+                    } else {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text("Lokasi merchant ini belum diatur oleh Admin.")),
+                      );
+                    }
+                  },
+                  icon: const Icon(Icons.navigation, size: 20),
+                  label: const Text(
+                    "Lihat Rute Lokasi",
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFFAEEA00), 
+                    foregroundColor: const Color(0xFF003D33), 
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
                     ),
+                    elevation: 0,
+                  ),
+                ),
+              ),
             ],
           ),
         ),
@@ -364,7 +391,7 @@ class _CustomerMerchantDetailPageState extends State<CustomerMerchantDetailPage>
     );
   }
 
-  // --- 2. WIDGET TAB ULASAN YANG DIPERBARUI (DENGAN TOMBOL NAVIGASI) ---
+  // --- WIDGET TAB ULASAN ---
   Widget _buildReviewTab() {
     return Column(
       children: [
@@ -375,7 +402,6 @@ class _CustomerMerchantDetailPageState extends State<CustomerMerchantDetailPage>
           color: Colors.white,
           child: OutlinedButton.icon(
             onPressed: () async {
-              // Navigasi ke Halaman CustomerAddReviewPage
               final result = await Navigator.push(
                 context,
                 MaterialPageRoute(
@@ -383,7 +409,6 @@ class _CustomerMerchantDetailPageState extends State<CustomerMerchantDetailPage>
                 ),
               );
 
-              // Segarkan daftar jika nilai kembaliannya true
               if (result == true) {
                 setState(() => _isLoadingDetails = true);
                 await _fetchReviews();
@@ -454,42 +479,36 @@ class _CustomerMerchantDetailPageState extends State<CustomerMerchantDetailPage>
                               style: TextStyle(color: Colors.grey[800], fontSize: 13, height: 1.4),
                             ),
                             
-                            // Bagian Foto Ulasan (Hanya tampil jika image_url tidak null/kosong)
+                            // Bagian Foto Ulasan
                             if (review.imageUrl != null && review.imageUrl!.isNotEmpty) ...[
                               const SizedBox(height: 12),
-                              
-                              // --- TAMBAHKAN GESTURE DETECTOR DI SINI ---
                               GestureDetector(
                                 onTap: () {
-                                  // Memunculkan Pop-up Gambar Full Screen
                                   showDialog(
                                     context: context,
                                     builder: (BuildContext context) {
                                       return Dialog(
-                                        backgroundColor: Colors.transparent, // Background transparan
-                                        insetPadding: EdgeInsets.zero, // Hilangkan jarak tepi
+                                        backgroundColor: Colors.transparent,
+                                        insetPadding: EdgeInsets.zero, 
                                         child: Stack(
                                           alignment: Alignment.center,
                                           children: [
-                                            // Container Hitam Transparan
                                             Container(
                                               width: double.infinity,
                                               height: double.infinity,
                                               color: Colors.black87,
                                             ),
-                                            // Widget untuk memungkinkan fitur Zoom In/Out
                                             InteractiveViewer(
-                                              panEnabled: true, // Bisa digeser
+                                              panEnabled: true,
                                               minScale: 0.5,
-                                              maxScale: 4.0, // Batas maksimal zoom
+                                              maxScale: 4.0, 
                                               child: Image.network(
                                                 review.imageUrl!,
-                                                fit: BoxFit.contain, // Tampilkan full tanpa terpotong
+                                                fit: BoxFit.contain,
                                                 width: double.infinity,
                                                 height: double.infinity,
                                               ),
                                             ),
-                                            // Tombol Silang (Tutup) di Pojok Kanan Atas
                                             Positioned(
                                               top: 40,
                                               right: 20,
@@ -504,7 +523,6 @@ class _CustomerMerchantDetailPageState extends State<CustomerMerchantDetailPage>
                                     },
                                   );
                                 },
-                                // Tampilan Gambar di List (Terpotong agar rapi)
                                 child: ClipRRect(
                                   borderRadius: BorderRadius.circular(8),
                                   child: Image.network(
