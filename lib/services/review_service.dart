@@ -27,7 +27,7 @@ class ReviewService {
     return jsonDecode(response.body);
   }
 
-  // 3. POST: Membuat review (DIPERBARUI DENGAN CUSTOMER ID)
+  // 3. POST: Membuat review (MENCARI CUSTOMER ID SECARA OTOMATIS)
   Future<Map<String, dynamic>> createReview({
     required int merchantId, 
     required int rating, 
@@ -37,30 +37,61 @@ class ReviewService {
   }) async {
     final headers = await ApiHelper.authHeaders();
     
-    // Hapus header JSON agar MultipartRequest bisa mengatur header 'multipart/form-data'
+    // Hapus header JSON agar MultipartRequest bisa bekerja
     headers.remove('Content-Type');
     headers.remove('content-type'); 
 
-    // --- KUNCI PERBAIKAN: AMBIL ID CUSTOMER ---
+    // --- 1. AMBIL USER_ID DARI SHARED PREFERENCES ---
     final int? userId = await SharedPrefHelper.getUserId();
-    final String customerId = userId != null ? userId.toString() : "";
-    // ------------------------------------------
+    String finalCustomerId = "";
 
+    if (userId != null) {
+      try {
+        // --- 2. PANGGIL API CUSTOMERS UNTUK MENCARI CUSTOMER_ID ---
+        final customerRes = await http.get(
+          Uri.parse("${Api.baseUrl}/customers"),
+          headers: await ApiHelper.authHeaders(), // Pakai header auth yang utuh
+        );
+        
+        final customerData = jsonDecode(customerRes.body);
+
+        if (customerData['success'] == true) {
+          final List<dynamic> customersList = customerData['data'];
+          
+          // Cari customer yang 'user_id'-nya sama dengan userId kita di SharedPref
+          final myCustomerProfile = customersList.firstWhere(
+            (c) => c['user_id'].toString() == userId.toString(),
+            orElse: () => null,
+          );
+
+          if (myCustomerProfile != null) {
+            finalCustomerId = myCustomerProfile['id'].toString(); // Inilah Customer ID aslinya!
+          }
+        }
+      } catch (e) {
+        throw Exception("Gagal terhubung ke data Customer: $e");
+      }
+    }
+
+    // Cegah proses jika Customer ID tidak ketemu
+    if (finalCustomerId.isEmpty) {
+      throw Exception("Profil Customer tidak ditemukan untuk akun ini. Pastikan profilmu sudah terdaftar.");
+    }
+
+    // --- 3. LANJUTKAN PROSES UPLOAD ULASAN SEPERTI BIASA ---
     final request = http.MultipartRequest(
       "POST",
       Uri.parse("${Api.baseUrl}/reviews"),
     );
 
-    // Masukkan header
     request.headers.addAll(headers);
 
-    // Masukkan data form-data
-    request.fields['customer_id'] = customerId; 
+    // Masukkan data dengan customer_id yang sudah tepat
+    request.fields['customer_id'] = finalCustomerId; 
     request.fields['merchant_id'] = merchantId.toString();
     request.fields['rating'] = rating.toString();
     request.fields['deskripsi'] = deskripsi;
 
-    // Masukkan data gambar jika ada
     if (imageBytes != null) {
       request.files.add(
         http.MultipartFile.fromBytes(
@@ -71,7 +102,6 @@ class ReviewService {
       );
     }
 
-    // Kirim request ke server
     final response = await request.send();
     final body = await response.stream.bytesToString();
 

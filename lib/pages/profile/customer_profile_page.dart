@@ -5,6 +5,7 @@ import '../../helpers/shared_pref_helper.dart';
 import '../../services/user_service.dart';
 import '../auth/login_page.dart';
 import 'customer_edit_profile_page.dart';
+import 'package:litera/pages/customer/customer_my_reviews_page.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -279,6 +280,20 @@ class _ProfilePageState extends State<ProfilePage> {
                 showDivider: false,
                 onTap: () {
                   _showLogoutDialog();
+                },
+              ),
+
+              _MenuItem(
+                icon: Icons.rate_review_outlined, // Ikon bintang/review
+                label: 'Review Saya',
+                textColor: darkText,
+                subtitleColor: subtitleColor,
+                dividerColor: dividerColor,
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const CustomerMyReviewsPage()),
+                  );
                 },
               ),
             ],
