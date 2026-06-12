@@ -1,7 +1,9 @@
 import 'dart:convert';
+import 'dart:typed_data'; // Tambahkan ini untuk Uint8List (Byte Gambar)
 import 'package:http/http.dart' as http;
 import '../constants/api.dart';
 import '../helpers/api_helper.dart';
+import '../helpers/shared_pref_helper.dart';
 
 class ReviewService {
   
@@ -25,27 +27,56 @@ class ReviewService {
     return jsonDecode(response.body);
   }
 
-  // 3. POST: Membuat review (Biasanya digunakan oleh Customer, tapi kita siapkan saja)
+  // 3. POST: Membuat review (DIPERBARUI DENGAN CUSTOMER ID)
   Future<Map<String, dynamic>> createReview({
     required int merchantId, 
     required int rating, 
     required String deskripsi,
-    // Jika upload gambar menggunakan multipart, kita perlu fungsi terpisah. 
-    // Ini asumsi basic JSON POST.
+    Uint8List? imageBytes,   
+    String? imageFileName,   
   }) async {
     final headers = await ApiHelper.authHeaders();
-    final response = await http.post(
-      Uri.parse("${Api.baseUrl}/reviews"),
-      headers: headers,
-      body: jsonEncode({
-        "merchant_id": merchantId,
-        "rating": rating,
-        "deskripsi": deskripsi,
-      }),
-    );
-    return jsonDecode(response.body);
-  }
+    
+    // Hapus header JSON agar MultipartRequest bisa mengatur header 'multipart/form-data'
+    headers.remove('Content-Type');
+    headers.remove('content-type'); 
 
+    // --- KUNCI PERBAIKAN: AMBIL ID CUSTOMER ---
+    final int? userId = await SharedPrefHelper.getUserId();
+    final String customerId = userId != null ? userId.toString() : "";
+    // ------------------------------------------
+
+    final request = http.MultipartRequest(
+      "POST",
+      Uri.parse("${Api.baseUrl}/reviews"),
+    );
+
+    // Masukkan header
+    request.headers.addAll(headers);
+
+    // Masukkan data form-data
+    request.fields['customer_id'] = customerId; 
+    request.fields['merchant_id'] = merchantId.toString();
+    request.fields['rating'] = rating.toString();
+    request.fields['deskripsi'] = deskripsi;
+
+    // Masukkan data gambar jika ada
+    if (imageBytes != null) {
+      request.files.add(
+        http.MultipartFile.fromBytes(
+          "image", 
+          imageBytes,
+          filename: imageFileName ?? "review_image.jpg",
+        ),
+      );
+    }
+
+    // Kirim request ke server
+    final response = await request.send();
+    final body = await response.stream.bytesToString();
+
+    return jsonDecode(body);
+  }
   // 4. DELETE: Soft delete review
   Future<Map<String, dynamic>> deleteReview(String id) async {
     final headers = await ApiHelper.authHeaders();

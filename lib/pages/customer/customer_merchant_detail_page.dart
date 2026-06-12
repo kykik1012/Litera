@@ -4,10 +4,11 @@ import 'package:http/http.dart' as http;
 import '../../models/merchant.dart';
 import '../../models/review.dart';
 import '../../services/review_service.dart';
+import 'package:litera/models/product.dart'; 
+import '../../services/product_service.dart'; 
 
-// 1. TAMBAHKAN IMPORT MODEL & SERVICE PRODUK
-import 'package:litera/models/product.dart'; // Sesuaikan nama file model produkmu jika berbeda
-import '../../services/product_service.dart'; // Sesuaikan nama file service produkmu
+// --- 1. TAMBAHKAN IMPORT HALAMAN FORM ULASAN ---
+import 'customer_add_review_page.dart'; 
 
 class CustomerMerchantDetailPage extends StatefulWidget {
   final MerchantModel merchant;
@@ -23,10 +24,13 @@ class CustomerMerchantDetailPage extends StatefulWidget {
 
 class _CustomerMerchantDetailPageState extends State<CustomerMerchantDetailPage> {
   final ReviewService _reviewService = ReviewService();
-  final ProductService _productService = ProductService(); // 2. INISIALISASI PRODUCT SERVICE
+  final ProductService _productService = ProductService(); 
+  
+  // Variabel form (_reviewController, dll) dan fungsi dispose() sudah DIHAPUS 
+  // karena dipindah ke customer_add_review_page.dart
   
   List<ReviewModel> _merchantReviews = [];
-  List<ProductModel> _merchantProducts = []; // 3. PENAMPUNG DATA PRODUK
+  List<ProductModel> _merchantProducts = []; 
   String _alamatTeks = "Memuat alamat...";
   bool _isLoadingDetails = true;
 
@@ -43,7 +47,6 @@ class _CustomerMerchantDetailPageState extends State<CustomerMerchantDetailPage>
   Future<void> _loadAllDetails() async {
     setState(() => _isLoadingDetails = true);
     
-    // 4. JALANKAN KETIGANYA BERSAMAAN (Alamat, Review, dan Produk)
     await Future.wait([
       _convertCoordsToAddress(),
       _fetchReviews(),
@@ -53,7 +56,6 @@ class _CustomerMerchantDetailPageState extends State<CustomerMerchantDetailPage>
     setState(() => _isLoadingDetails = false);
   }
 
-  // Konversi koordinat menjadi teks alamat
   // --- MENGGUNAKAN API OPENSTREETMAP (NOMINATIM) ---
   Future<void> _convertCoordsToAddress() async {
     if (widget.merchant.latitude == null || widget.merchant.longitude == null) {
@@ -65,11 +67,9 @@ class _CustomerMerchantDetailPageState extends State<CustomerMerchantDetailPage>
       final lat = widget.merchant.latitude!;
       final lon = widget.merchant.longitude!;
       
-      // Memanggil API gratis dari OpenStreetMap
       final url = Uri.parse('https://nominatim.openstreetmap.org/reverse?format=json&lat=$lat&lon=$lon');
       
       final response = await http.get(url, headers: {
-        // Nominatim mewajibkan kita mengirim User-Agent (Nama aplikasi kita)
         'User-Agent': 'LiteraApp/1.0', 
       });
 
@@ -79,7 +79,6 @@ class _CustomerMerchantDetailPageState extends State<CustomerMerchantDetailPage>
         if (data['address'] != null) {
           final address = data['address'];
           
-          // Mengambil komponen alamat (Jalan, Kelurahan/Desa, Kota/Kabupaten)
           final jalan = address['road'] ?? address['pedestrian'] ?? '';
           final kelurahan = address['suburb'] ?? address['village'] ?? '';
           final kota = address['city'] ?? address['town'] ?? address['county'] ?? '';
@@ -90,7 +89,6 @@ class _CustomerMerchantDetailPageState extends State<CustomerMerchantDetailPage>
           if (kota.isNotEmpty) alamatRapi.add(kota);
           
           setState(() {
-            // Jika berhasil disusun, tampilkan. Jika tidak, tampilkan nama lengkap dari OSM
             _alamatTeks = alamatRapi.isNotEmpty ? alamatRapi.join(', ') : (data['display_name'] ?? 'Alamat ditemukan');
           });
         } else {
@@ -123,7 +121,7 @@ class _CustomerMerchantDetailPageState extends State<CustomerMerchantDetailPage>
     }
   }
 
-  // 5. FUNGSI AMBIL PRODUK DARI API
+  // FUNGSI AMBIL PRODUK DARI API
   Future<void> _fetchProducts() async {
     try {
       final response = await _productService.getAllProducts();
@@ -143,7 +141,7 @@ class _CustomerMerchantDetailPageState extends State<CustomerMerchantDetailPage>
   @override
   Widget build(BuildContext context) {
     return DefaultTabController(
-      length: 2, // 2 Tab: Produk & Ulasan
+      length: 2, 
       child: Scaffold(
         body: NestedScrollView(
           headerSliverBuilder: (BuildContext context, bool innerBoxIsScrolled) {
@@ -256,7 +254,7 @@ class _CustomerMerchantDetailPageState extends State<CustomerMerchantDetailPage>
     );
   }
 
-  // --- 6. WIDGET TAB PRODUK DINAMIS ---
+  // --- WIDGET TAB PRODUK ---
   Widget _buildProductTab() {
     if (_merchantProducts.isEmpty) {
       return const Center(child: Text("Belum ada produk untuk toko ini."));
@@ -275,7 +273,6 @@ class _CustomerMerchantDetailPageState extends State<CustomerMerchantDetailPage>
             padding: const EdgeInsets.all(12.0),
             child: Row(
               children: [
-                // Gambar Produk
                 ClipRRect(
                   borderRadius: BorderRadius.circular(8),
                   child: product.imageUrl != null && product.imageUrl!.isNotEmpty
@@ -293,8 +290,6 @@ class _CustomerMerchantDetailPageState extends State<CustomerMerchantDetailPage>
                         ),
                 ),
                 const SizedBox(width: 16),
-                
-                // Informasi Produk
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -312,14 +307,12 @@ class _CustomerMerchantDetailPageState extends State<CustomerMerchantDetailPage>
                     ],
                   ),
                 ),
-                
-                // Tombol Beli / Habis
                 ElevatedButton(
-                  onPressed: product.isAvailable ? () {} : null, // Nonaktifkan jika isAvailable == false
+                  onPressed: product.isAvailable ? () {} : null, 
                   style: ElevatedButton.styleFrom(
                     backgroundColor: darkGreen, 
                     foregroundColor: Colors.white,
-                    disabledBackgroundColor: Colors.grey[300], // Warna kalau habis
+                    disabledBackgroundColor: Colors.grey[300], 
                   ),
                   child: Text(product.isAvailable ? "Beli" : "Habis"),
                 )
@@ -331,43 +324,187 @@ class _CustomerMerchantDetailPageState extends State<CustomerMerchantDetailPage>
     );
   }
 
-  // --- WIDGET TAB ULASAN ---
+  // --- 2. WIDGET TAB ULASAN YANG DIPERBARUI (DENGAN TOMBOL NAVIGASI) ---
   Widget _buildReviewTab() {
-    if (_merchantReviews.isEmpty) {
-      return const Center(child: Text("Belum ada ulasan untuk toko ini."));
-    }
-
-    return ListView.builder(
-      padding: const EdgeInsets.all(16),
-      itemCount: _merchantReviews.length,
-      itemBuilder: (context, index) {
-        final review = _merchantReviews[index];
-        return Card(
-          margin: const EdgeInsets.only(bottom: 12),
-          child: Padding(
-            padding: const EdgeInsets.all(12.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(review.customerName, style: const TextStyle(fontWeight: FontWeight.bold)),
-                    Row(
-                      children: List.generate(5, (i) => Icon(
-                        i < review.rating ? Icons.star_rounded : Icons.star_border_rounded,
-                        color: Colors.amber, size: 16,
-                      )),
-                    )
-                  ],
+    return Column(
+      children: [
+        // Tombol Tambah Ulasan di Header
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(16),
+          color: Colors.white,
+          child: OutlinedButton.icon(
+            onPressed: () async {
+              // Navigasi ke Halaman CustomerAddReviewPage
+              final result = await Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => CustomerAddReviewPage(merchant: widget.merchant),
                 ),
-                const SizedBox(height: 8),
-                Text(review.deskripsi, style: TextStyle(color: Colors.grey[800], fontSize: 13)),
-              ],
+              );
+
+              // Segarkan daftar jika nilai kembaliannya true
+              if (result == true) {
+                setState(() => _isLoadingDetails = true);
+                await _fetchReviews();
+                setState(() => _isLoadingDetails = false);
+              }
+            },
+            icon: Icon(Icons.edit, color: darkGreen),
+            label: Text("Tulis Ulasan", style: TextStyle(color: darkGreen, fontWeight: FontWeight.bold)),
+            style: OutlinedButton.styleFrom(
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              side: BorderSide(color: darkGreen),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
             ),
           ),
-        );
-      },
+        ),
+
+        // List Ulasan Pembeli
+        Expanded(
+          child: _merchantReviews.isEmpty
+              ? const Center(child: Text("Belum ada ulasan untuk toko ini. Jadilah yang pertama!"))
+              : ListView.builder(
+                  padding: const EdgeInsets.all(16),
+                  itemCount: _merchantReviews.length,
+                  itemBuilder: (context, index) {
+                    final review = _merchantReviews[index];
+                    return Card(
+                      elevation: 1,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      margin: const EdgeInsets.only(bottom: 16),
+                      child: Padding(
+                        padding: const EdgeInsets.all(16.0),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Row(
+                                  children: [
+                                    CircleAvatar(
+                                      radius: 14,
+                                      backgroundColor: limeGreen.withOpacity(0.3),
+                                      child: Text(
+                                        review.customerName.isNotEmpty ? review.customerName[0].toUpperCase() : '?',
+                                        style: TextStyle(color: darkGreen, fontWeight: FontWeight.bold, fontSize: 12),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Text(
+                                      review.customerName, 
+                                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                                    ),
+                                  ],
+                                ),
+                                Row(
+                                  children: List.generate(5, (i) => Icon(
+                                    i < review.rating ? Icons.star_rounded : Icons.star_border_rounded,
+                                    color: Colors.amber, 
+                                    size: 16,
+                                  )),
+                                )
+                              ],
+                            ),
+                            
+                            const SizedBox(height: 12),
+                            Text(
+                              review.deskripsi, 
+                              style: TextStyle(color: Colors.grey[800], fontSize: 13, height: 1.4),
+                            ),
+                            
+                            // Bagian Foto Ulasan (Hanya tampil jika image_url tidak null/kosong)
+                            if (review.imageUrl != null && review.imageUrl!.isNotEmpty) ...[
+                              const SizedBox(height: 12),
+                              
+                              // --- TAMBAHKAN GESTURE DETECTOR DI SINI ---
+                              GestureDetector(
+                                onTap: () {
+                                  // Memunculkan Pop-up Gambar Full Screen
+                                  showDialog(
+                                    context: context,
+                                    builder: (BuildContext context) {
+                                      return Dialog(
+                                        backgroundColor: Colors.transparent, // Background transparan
+                                        insetPadding: EdgeInsets.zero, // Hilangkan jarak tepi
+                                        child: Stack(
+                                          alignment: Alignment.center,
+                                          children: [
+                                            // Container Hitam Transparan
+                                            Container(
+                                              width: double.infinity,
+                                              height: double.infinity,
+                                              color: Colors.black87,
+                                            ),
+                                            // Widget untuk memungkinkan fitur Zoom In/Out
+                                            InteractiveViewer(
+                                              panEnabled: true, // Bisa digeser
+                                              minScale: 0.5,
+                                              maxScale: 4.0, // Batas maksimal zoom
+                                              child: Image.network(
+                                                review.imageUrl!,
+                                                fit: BoxFit.contain, // Tampilkan full tanpa terpotong
+                                                width: double.infinity,
+                                                height: double.infinity,
+                                              ),
+                                            ),
+                                            // Tombol Silang (Tutup) di Pojok Kanan Atas
+                                            Positioned(
+                                              top: 40,
+                                              right: 20,
+                                              child: IconButton(
+                                                icon: const Icon(Icons.close, color: Colors.white, size: 32),
+                                                onPressed: () => Navigator.of(context).pop(),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      );
+                                    },
+                                  );
+                                },
+                                // Tampilan Gambar di List (Terpotong agar rapi)
+                                child: ClipRRect(
+                                  borderRadius: BorderRadius.circular(8),
+                                  child: Image.network(
+                                    review.imageUrl!,
+                                    width: double.infinity,
+                                    height: 150,
+                                    fit: BoxFit.cover,
+                                    errorBuilder: (context, error, stackTrace) => Container(
+                                      width: double.infinity,
+                                      height: 150,
+                                      color: Colors.grey[200],
+                                      child: const Column(
+                                        mainAxisAlignment: MainAxisAlignment.center,
+                                        children: [
+                                          Icon(Icons.broken_image, color: Colors.grey),
+                                          SizedBox(height: 4),
+                                          Text("Gambar tidak tersedia", style: TextStyle(color: Colors.grey, fontSize: 12))
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                            
+                            if (review.submittedAt != null) ...[
+                              const SizedBox(height: 12),
+                              Text(
+                                "${review.submittedAt!.day}/${review.submittedAt!.month}/${review.submittedAt!.year}",
+                                style: const TextStyle(color: Colors.grey, fontSize: 10),
+                              ),
+                            ]
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                ),
+        ),
+      ],
     );
   }
 }
