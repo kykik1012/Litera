@@ -126,4 +126,17 @@ class ReviewService {
     );
     return jsonDecode(response.body);
   }
+
+  // 6. GET: Mengambil review berdasarkan nama bisnis merchant (filter client-side)
+  Future<List<Map<String, dynamic>>> getReviewsByMerchantName(String namaBisnis) async {
+    final result = await getAllReviews();
+    if (result['success'] == true && result['data'] != null) {
+      final List<dynamic> allReviews = result['data'];
+      return allReviews
+          .where((r) => r['nama_bisnis'] == namaBisnis && r['is_delete'] != true)
+          .map<Map<String, dynamic>>((r) => Map<String, dynamic>.from(r))
+          .toList();
+    }
+    return [];
+  }
 }
