@@ -27,4 +27,18 @@ class MerchantService {
 
     return jsonDecode(response.body);
   }
+
+  // --- UPDATE STATUS BUKA/TUTUP MERCHANT ---
+  Future<Map<String, dynamic>> updateMerchantStatus(String id, String status) async {
+    final headers = await ApiHelper.authHeaders();
+    final response = await http.put(
+      Uri.parse("${Api.baseUrl}/merchants/$id/status"),
+      headers: headers,
+      body: jsonEncode({
+        "status": status, // Mengirim "Buka" atau "Tutup"
+      }),
+    );
+
+    return jsonDecode(response.body);
+  }
 }

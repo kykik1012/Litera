@@ -6,6 +6,7 @@ import '../../models/review.dart';
 import '../../services/review_service.dart';
 import 'package:litera/models/product.dart'; 
 import '../../services/product_service.dart'; 
+import 'customer_single_route_page.dart';
 
 // --- 1. TAMBAHKAN IMPORT HALAMAN FORM ULASAN ---
 import 'customer_add_review_page.dart'; 
@@ -247,6 +248,45 @@ class _CustomerMerchantDetailPageState extends State<CustomerMerchantDetailPage>
                   ),
                 ],
               ),
+              const SizedBox(height: 20), // Beri jarak sedikit
+                    
+                    // --- TAMBAHKAN TOMBOL RUTE DI SINI ---
+                    SizedBox(
+                      width: double.infinity, // Agar tombol memenuhi lebar layar
+                      child: ElevatedButton.icon(
+                        onPressed: () {
+                          // Cek apakah koordinatnya ada
+                          if (widget.merchant.latitude != null && widget.merchant.longitude != null) {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => CustomerSingleRoutePage(
+                                  merchant: widget.merchant, 
+                                ),
+                              ),
+                            );
+                          } else {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text("Lokasi merchant ini belum diatur oleh Admin.")),
+                            );
+                          }
+                        },
+                        icon: const Icon(Icons.navigation, size: 20),
+                        label: const Text(
+                          "Lihat Rute Lokasi",
+                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFFAEEA00), // Warna Hijau Stabilo (Lime Green)
+                          foregroundColor: const Color(0xFF003D33), // Teks warna Hijau Tua
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          elevation: 0,
+                        ),
+                      ),
+                    ),
             ],
           ),
         ),

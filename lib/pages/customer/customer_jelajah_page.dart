@@ -484,11 +484,25 @@ class _CustomerJelajahPageState extends State<CustomerJelajahPage> {
                               children: [
                                 const Icon(Icons.star, color: Colors.amber, size: 14),
                                 const SizedBox(width: 4),
-                                // TAMPILKAN RATING DI SINI
                                 Text(
                                   displayRating, 
                                   style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: darkGreen),
                                 ),
+                                const SizedBox(width: 8),
+
+                                // --- TAMBAHAN BARU: BADGE STATUS MERCHANT ---
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                  decoration: BoxDecoration(
+                                    color: merchant.status.toLowerCase() == 'buka' ? Colors.green : Colors.red,
+                                    borderRadius: BorderRadius.circular(4),
+                                  ),
+                                  child: Text(
+                                    merchant.status.toUpperCase(),
+                                    style: const TextStyle(color: Colors.white, fontSize: 8, fontWeight: FontWeight.bold),
+                                  ),
+                                ),
+                                // --------------------------------------------
                               ],
                             ),
                             Container(

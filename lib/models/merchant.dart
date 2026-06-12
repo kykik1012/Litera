@@ -7,6 +7,7 @@ class MerchantModel {
   final String? profilePicture;
   final num? latitude;
   final num? longitude;
+  final String status;
 
   MerchantModel({
     required this.id,
@@ -17,6 +18,7 @@ class MerchantModel {
     this.profilePicture,
     this.latitude,
     this.longitude,
+    required this.status,
   });
 
   factory MerchantModel.fromJson(Map<String, dynamic> json) {
@@ -37,6 +39,7 @@ class MerchantModel {
       // Gunakan num untuk menerima baik int maupun double dari JSON
       latitude: json['latitude'] as num?,
       longitude: json['longitude'] as num?,
+      status: json['status'] ?? 'Tutup',
     );
   }
 

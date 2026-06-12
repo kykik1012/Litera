@@ -1,20 +1,21 @@
 import 'package:flutter/material.dart';
 import '../../models/route_detail.dart';
+import '../../models/merchant.dart'; // <--- TAMBAHAN IMPORT MODEL
 import '../../services/route_detail_service.dart';
+import '../../services/merchant_service.dart'; // <--- TAMBAHAN IMPORT SERVICE
 
-// Import halaman peta navigasi yang sudah kita buat sebelumnya
 import 'customer_route_detail_page.dart'; 
 
 class CustomerRoutePreviewPage extends StatefulWidget {
   final int thematicRouteId;
   final String judulRute;
-  final String deskripsiRute; // <--- 1. TAMBAHAN VARIABEL BARU
+  final String deskripsiRute;
 
   const CustomerRoutePreviewPage({
     super.key,
     required this.thematicRouteId,
     required this.judulRute,
-    required this.deskripsiRute, // <--- PASTIKAN INI REQUIRED
+    required this.deskripsiRute,
   });
 
   @override
@@ -23,7 +24,10 @@ class CustomerRoutePreviewPage extends StatefulWidget {
 
 class _CustomerRoutePreviewPageState extends State<CustomerRoutePreviewPage> {
   final RouteDetailService _routeDetailService = RouteDetailService();
+  final MerchantService _merchantService = MerchantService(); // Tambahan service
+
   List<RouteDetailModel> _routePoints = [];
+  List<MerchantModel> _allMerchants = []; // Tambahan penyimpan data merchant
   bool _isLoading = true;
 
   @override
@@ -35,21 +39,43 @@ class _CustomerRoutePreviewPageState extends State<CustomerRoutePreviewPage> {
   Future<void> _fetchPreviewData() async {
     setState(() => _isLoading = true);
     try {
-      final response = await _routeDetailService.getAllRouteDetails();
-      if (response['success'] == true) {
-        final List<dynamic> data = response['data'];
-        
-        setState(() {
-          _routePoints = data
-              .map((json) => RouteDetailModel.fromJson(json))
-              .where((detail) => detail.thematicRouteId == widget.thematicRouteId)
-              .toList();
-        });
+      // Panggil API Route Details dan API Merchants SECARA BERSAMAAN
+      final responses = await Future.wait([
+        _routeDetailService.getAllRouteDetails(),
+        _merchantService.getAllMerchants(),
+      ]);
+
+      // Ekstrak data Rute
+      if (responses[0]['success'] == true) {
+        final List<dynamic> data = responses[0]['data'];
+        _routePoints = data
+            .map((json) => RouteDetailModel.fromJson(json))
+            .where((detail) => detail.thematicRouteId == widget.thematicRouteId)
+            .toList();
       }
+
+      // Ekstrak data Merchant
+      if (responses[1]['success'] == true) {
+        final List<dynamic> mData = responses[1]['data'];
+        _allMerchants = mData.map((e) => MerchantModel.fromJson(e)).toList();
+      }
+
     } catch (e) {
       debugPrint("Error loading preview: $e");
     } finally {
       setState(() => _isLoading = false);
+    }
+  }
+
+  // --- FUNGSI HELPER: Mencari status merchant berdasarkan nama bisnis ---
+  String _getMerchantStatus(String namaBisnis) {
+    try {
+      final merchant = _allMerchants.firstWhere(
+        (m) => m.namaBisnis.toLowerCase() == namaBisnis.toLowerCase(),
+      );
+      return merchant.status;
+    } catch (_) {
+      return 'Tutup'; // Jika toko tidak ditemukan, asumsikan Tutup
     }
   }
 
@@ -58,7 +84,7 @@ class _CustomerRoutePreviewPageState extends State<CustomerRoutePreviewPage> {
     return Scaffold(
       backgroundColor: const Color(0xFFF5F7F8),
       appBar: AppBar(
-        backgroundColor: const Color(0xFF003D33), // Hijau Tua Litera
+        backgroundColor: const Color(0xFF003D33),
         foregroundColor: Colors.white,
         title: const Text("Detail Perjalanan"),
       ),
@@ -88,15 +114,11 @@ class _CustomerRoutePreviewPageState extends State<CustomerRoutePreviewPage> {
                             style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Color(0xFF003D33)),
                           ),
                           const SizedBox(height: 8),
-                          
-                          // --- 2. TAMPILKAN DESKRIPSI DI SINI ---
                           Text(
                             widget.deskripsiRute,
                             style: TextStyle(fontSize: 14, color: Colors.grey[800], height: 1.4),
                           ),
                           const SizedBox(height: 12),
-                          // --------------------------------------
-
                           Row(
                             children: [
                               const Icon(Icons.location_on, color: Colors.red, size: 16),
@@ -122,6 +144,11 @@ class _CustomerRoutePreviewPageState extends State<CustomerRoutePreviewPage> {
                         itemCount: _routePoints.length,
                         itemBuilder: (context, index) {
                           final point = _routePoints[index];
+                          
+                          // --- CEK STATUS BUKA/TUTUP ---
+                          final status = _getMerchantStatus(point.namaBisnis);
+                          final isBuka = status.toLowerCase() == 'buka';
+
                           return Card(
                             elevation: 0,
                             margin: const EdgeInsets.only(bottom: 12),
@@ -131,14 +158,41 @@ class _CustomerRoutePreviewPageState extends State<CustomerRoutePreviewPage> {
                             ),
                             child: ListTile(
                               leading: CircleAvatar(
-                                backgroundColor: const Color(0xFFAEEA00),
+                                backgroundColor: isBuka ? const Color(0xFFAEEA00) : Colors.grey[300],
                                 child: Text(
                                   "${index + 1}",
-                                  style: const TextStyle(color: Color(0xFF003D33), fontWeight: FontWeight.bold),
+                                  style: TextStyle(
+                                    color: isBuka ? const Color(0xFF003D33) : Colors.grey[600], 
+                                    fontWeight: FontWeight.bold
+                                  ),
                                 ),
                               ),
-                              title: Text(point.namaBisnis, style: const TextStyle(fontWeight: FontWeight.bold)),
-                              subtitle: const Text("Titik Persinggahan", style: TextStyle(fontSize: 12)),
+                              title: Text(
+                                point.namaBisnis, 
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  color: isBuka ? Colors.black : Colors.grey,
+                                  decoration: isBuka ? null : TextDecoration.lineThrough, // Coret jika tutup
+                                )
+                              ),
+                              subtitle: Row(
+                                children: [
+                                  const Text("Titik Persinggahan", style: TextStyle(fontSize: 12)),
+                                  const SizedBox(width: 8),
+                                  // --- BADGE BUKA/TUTUP ---
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                    decoration: BoxDecoration(
+                                      color: isBuka ? Colors.green : Colors.red,
+                                      borderRadius: BorderRadius.circular(4),
+                                    ),
+                                    child: Text(
+                                      isBuka ? "Buka" : "Tutup", 
+                                      style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold)
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
                           );
                         },
@@ -147,7 +201,7 @@ class _CustomerRoutePreviewPageState extends State<CustomerRoutePreviewPage> {
                   ],
                 ),
       
-      // Tombol Batal & Mulai Rute di area bawah (Bottom Nav)
+      // Tombol Batal & Mulai Rute
       bottomNavigationBar: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
@@ -156,7 +210,6 @@ class _CustomerRoutePreviewPageState extends State<CustomerRoutePreviewPage> {
         ),
         child: Row(
           children: [
-            // Tombol Batal
             Expanded(
               child: OutlinedButton(
                 onPressed: () => Navigator.pop(context),
@@ -170,13 +223,42 @@ class _CustomerRoutePreviewPageState extends State<CustomerRoutePreviewPage> {
             ),
             const SizedBox(width: 16),
             
-            // Tombol Mulai Rute
+            // TOMBOL MULAI RUTE DENGAN LOGIKA SKIP
             Expanded(
               flex: 2, 
               child: ElevatedButton(
                 onPressed: _routePoints.isEmpty 
                     ? null 
                     : () {
+                        // 1. Kumpulkan Merchant yang sedang 'Buka' saja
+                        final ruteBuka = _routePoints.where(
+                          (p) => _getMerchantStatus(p.namaBisnis).toLowerCase() == 'buka'
+                        ).toList();
+
+                        // 2. Jika semua rute tutup, tampilkan peringatan dan BLOKIR navigasi!
+                        if (ruteBuka.isEmpty) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text("Merchant sedang tutup. Rute tidak dapat diakses hari ini."),
+                              backgroundColor: Colors.red,
+                              duration: Duration(seconds: 3),
+                            ),
+                          );
+                          return;
+                        }
+
+                        // 3. Jika ada yang buka, beri tahu pengguna bahwa yang tutup akan diskip
+                        if (ruteBuka.length < _routePoints.length) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text("Beberapa merchant tutup dan otomatis dilewati dari navigasi."),
+                              backgroundColor: Colors.orange,
+                              duration: Duration(seconds: 3),
+                            ),
+                          );
+                        }
+
+                        // 4. Lanjutkan Navigasi
                         Navigator.pushReplacement(
                           context,
                           MaterialPageRoute(

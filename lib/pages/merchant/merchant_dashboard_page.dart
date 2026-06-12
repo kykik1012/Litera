@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import '../../helpers/shared_pref_helper.dart';
 import '../../services/user_service.dart';
 import '../../services/product_service.dart';
+import '../../services/merchant_service.dart'; // <--- TAMBAHAN IMPORT
 import '../../models/product.dart';
 import 'merchant_edit_katalog_page.dart';
 import 'merchant_promo_bottomsheet.dart';
@@ -19,12 +20,16 @@ class MerchantDashboardPage extends StatefulWidget {
 class _MerchantDashboardPageState extends State<MerchantDashboardPage> {
   final UserService _userService = UserService();
   final ProductService _productService = ProductService();
+  final MerchantService _merchantService = MerchantService(); // <--- TAMBAHAN SERVICE
 
   String _namaBisnis = '';
   String? _profilePicture;
+  String _merchantId = ''; // <--- Menyimpan ID Merchant asli
   List<ProductModel> _products = [];
+  
   bool _isLoading = true;
-  bool _isTokoActive = true;
+  bool _isTokoActive = false; // Akan diisi otomatis dari database
+  bool _isLoadingStatus = false; // Loading khusus untuk tombol switch
 
   static const Color tealDark = Color(0xFF0D3B2E);
   static const Color tealMid = Color(0xFF145C54);
@@ -52,11 +57,29 @@ class _MerchantDashboardPageState extends State<MerchantDashboardPage> {
     try {
       final userId = await SharedPrefHelper.getUserId() ?? 0;
       if (userId == 0) return;
+      
+      // 1. Ambil nama dan foto profil dari UserService
       final response = await _userService.getUserById(userId);
       if (response["success"] == true) {
         final data = response["data"];
         _namaBisnis = data["nama_bisnis"] ?? data["name"] ?? '';
         _profilePicture = data["profile_picture"];
+      }
+
+      // 2. Ambil Merchant ID dan Status saat ini dari MerchantService
+      final merchantRes = await _merchantService.getAllMerchants();
+      if (merchantRes['success'] == true) {
+        final List<dynamic> mList = merchantRes['data'];
+        final myMerchant = mList.firstWhere(
+          (m) => m['user_id'].toString() == userId.toString(),
+          orElse: () => null,
+        );
+        
+        if (myMerchant != null) {
+          _merchantId = myMerchant['id'].toString();
+          // Sesuaikan posisi switch dengan data dari server
+          _isTokoActive = (myMerchant['status']?.toString().toLowerCase() == 'buka'); 
+        }
       }
     } catch (e) {
       debugPrint("Error loading merchant profile: $e");
@@ -90,6 +113,66 @@ class _MerchantDashboardPageState extends State<MerchantDashboardPage> {
       }
     } catch (e) {
       debugPrint("Error loading products: $e");
+    }
+  }
+
+  // --- FUNGSI UPDATE STATUS TOKO KE API ---
+  Future<void> _toggleStatus(bool value) async {
+    if (_merchantId.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Data toko belum siap. Coba refresh halaman.")),
+      );
+      return;
+    }
+
+    setState(() => _isLoadingStatus = true);
+    String statusBaru = value ? "Buka" : "Tutup";
+
+    try {
+      final response = await _merchantService.updateMerchantStatus(_merchantId, statusBaru);
+      
+      if (response['success'] == true) {
+        setState(() => _isTokoActive = value);
+        
+        if (!mounted) return;
+        
+        // --- ALERT SUKSES ---
+        showDialog(
+          context: context,
+          builder: (ctx) => AlertDialog(
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            title: Row(
+              children: [
+                Icon(value ? Icons.check_circle : Icons.info, color: value ? limeGreen : Colors.orange),
+                const SizedBox(width: 8),
+                Text("Status Diperbarui", style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.bold, color: tealDark)),
+              ],
+            ),
+            content: Text(
+              "Toko kamu sekarang berstatus $statusBaru.",
+              style: GoogleFonts.poppins(color: Colors.grey[700]),
+            ),
+            actions: [
+              ElevatedButton(
+                onPressed: () => Navigator.pop(ctx),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: tealDark,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                ),
+                child: const Text("Tutup"),
+              )
+            ],
+          ),
+        );
+      } else {
+        throw Exception(response['message'] ?? "Gagal merubah status");
+      }
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Terjadi kesalahan: $e")));
+    } finally {
+      if (mounted) setState(() => _isLoadingStatus = false);
     }
   }
 
@@ -505,7 +588,7 @@ class _MerchantDashboardPageState extends State<MerchantDashboardPage> {
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        _isTokoActive ? 'Aktif' : 'Tidak Aktif',
+                        _isTokoActive ? 'Aktif' : 'Tidak Aktif (Tutup)',
                         style: GoogleFonts.poppins(
                           fontSize: 12,
                           color: _isTokoActive ? tealDark : Colors.grey[600],
@@ -514,19 +597,25 @@ class _MerchantDashboardPageState extends State<MerchantDashboardPage> {
                     ],
                   ),
                 ),
+                
+                // --- SWITCH BUTTON ---
                 Transform.scale(
                   scale: 1.1,
-                  child: Switch(
-                    value: _isTokoActive,
-                    onChanged: (value) =>
-                        setState(() => _isTokoActive = value),
-                    activeThumbColor: tealDark,
-                    activeTrackColor: Colors.white,
-                    inactiveThumbColor: Colors.grey[400],
-                    inactiveTrackColor: Colors.grey[300],
-                    trackOutlineColor:
-                        WidgetStateProperty.all(Colors.transparent),
-                  ),
+                  child: _isLoadingStatus
+                      ? const SizedBox(
+                          width: 24,
+                          height: 24,
+                          child: CircularProgressIndicator(color: tealDark, strokeWidth: 2),
+                        )
+                      : Switch(
+                          value: _isTokoActive,
+                          onChanged: _toggleStatus, // Memanggil fungsi update API
+                          activeThumbColor: tealDark,
+                          activeTrackColor: Colors.white,
+                          inactiveThumbColor: Colors.grey[400],
+                          inactiveTrackColor: Colors.grey[300],
+                          trackOutlineColor: WidgetStateProperty.all(Colors.transparent),
+                        ),
                 ),
               ],
             ),

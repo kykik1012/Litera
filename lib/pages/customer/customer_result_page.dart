@@ -1,14 +1,16 @@
 import 'package:flutter/material.dart';
-import 'package:latlong2/latlong.dart'; // Tambahkan ini untuk LatLng
+import 'package:latlong2/latlong.dart';
 import 'package:litera/models/merchant.dart';
 import 'package:litera/models/thematic_route.dart';
 
 import '../../services/merchant_service.dart';
 import '../../services/thematic_service.dart';
-import '../../services/route_detail_service.dart'; // Tambahkan ini
+import '../../services/route_detail_service.dart';
+import 'customer_merchant_detail_page.dart'; // Halaman detail merchant
 
-// Import halaman detail rute (sesuaikan path-nya jika berbeda)
-import 'customer_route_detail_page.dart'; 
+// Asumsi kita menggunakan halaman Preview terlebih dahulu sebelum navigasi Map,
+// sama seperti di halaman Jelajah. Jika nama file aslinya berbeda, silakan disesuaikan.
+import 'customer_route_preview_page.dart'; 
 
 class SearchResultsPage extends StatefulWidget {
   final String query;
@@ -75,7 +77,7 @@ class _SearchResultsPageState extends State<SearchResultsPage> {
     } catch (e) {
       debugPrint("Error searching data: $e");
     } finally {
-      setState(() => _isLoading = false);
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
@@ -105,19 +107,21 @@ class _SearchResultsPageState extends State<SearchResultsPage> {
               overflow: TextOverflow.ellipsis,
             ),
             trailing: const Icon(Icons.chevron_right),
-            // --- UBAH ONTAP RUTE ---
+            
+            // --- DIPERBARUI: Navigasi ke Preview Rute dengan Parameter Lengkap ---
             onTap: () {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => CustomerRouteDetailPage(
+                  builder: (context) => CustomerRoutePreviewPage(
                     thematicRouteId: int.parse(route.id),
                     judulRute: route.judulRute,
+                    deskripsiRute: route.deskripsi, // <-- Tambahan Wajib
                   ),
                 ),
               );
             },
-            // ------------------------
+            // ----------------------------------------------------------------------
           ),
         );
       },
@@ -145,59 +149,25 @@ class _SearchResultsPageState extends State<SearchResultsPage> {
             ),
             title: Text(merchant.namaBisnis, style: const TextStyle(fontWeight: FontWeight.bold)),
             subtitle: Text(merchant.deskripsi ?? "Toko / Merchant Litera"),
-            trailing: const Icon(Icons.chevron_right),
-            // --- UBAH ONTAP MERCHANT ---
-            onTap: () async {
-              // Tampilkan dialog loading
-              showDialog(
-                context: context,
-                barrierDismissible: false,
-                builder: (context) => const Center(child: CircularProgressIndicator(color: Colors.green)),
+            trailing: const Icon(Icons.chevron_right, color: Color(0xFF003D33)), // Ganti ikon agar lebih netral
+            
+            // --- DIPERBARUI: Navigasi ke Detail Merchant ---
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => CustomerMerchantDetailPage(
+                    merchant: merchant, // Mengirim objek merchant lengkap ke detail
+                  ),
+                ),
               );
-
-              try {
-                final response = await RouteDetailService().getAllRouteDetails();
-                if (!mounted) return;
-                Navigator.pop(context); // Tutup loading
-
-                if (response['success'] == true) {
-                  final List<dynamic> details = response['data'];
-                  
-                  // Cari data rute yang mengaitkan merchant ini
-                  final match = details.firstWhere(
-                    (d) => d['merchant_id'].toString() == merchant.id,
-                    orElse: () => null,
-                  );
-
-                  if (match != null) {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => CustomerRouteDetailPage(
-                          thematicRouteId: match['thematic_route_id'],
-                          judulRute: match['judul_rute'] ?? "Rute Merchant",
-                          focusLocation: LatLng(merchant.latitude!.toDouble(), merchant.longitude!.toDouble()),
-                        ),
-                      ),
-                    );
-                  } else {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text("Merchant ini belum terdaftar di rute tematik manapun.")),
-                    );
-                  }
-                }
-              } catch (e) {
-                if (mounted) Navigator.pop(context);
-                debugPrint(e.toString());
-              }
             },
-            // ---------------------------
+            // ----------------------------------------------
           ),
         );
       },
     );
   }
-
   @override
   Widget build(BuildContext context) {
     return DefaultTabController(
