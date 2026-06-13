@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import '../../helpers/shared_pref_helper.dart';
 import '../../services/review_service.dart';
 import '../../services/user_service.dart';
+import '../../services/merchant_service.dart';
 import '../../models/review.dart';
 
 class MerchantUlasanPage extends StatefulWidget {
@@ -17,6 +18,7 @@ class MerchantUlasanPage extends StatefulWidget {
 class _MerchantUlasanPageState extends State<MerchantUlasanPage> {
   final ReviewService _reviewService = ReviewService();
   final UserService _userService = UserService();
+  final MerchantService _merchantService = MerchantService();
 
   List<ReviewModel> _allReviews = [];
   bool _isLoading = true;
@@ -42,9 +44,16 @@ class _MerchantUlasanPageState extends State<MerchantUlasanPage> {
       // Get merchant's business name
       final userId = await SharedPrefHelper.getUserId() ?? 0;
       if (userId != 0) {
-        final userResponse = await _userService.getUserById(userId);
-        if (userResponse["success"] == true) {
-          _namaBisnis = userResponse["data"]["nama_bisnis"] ?? '';
+        final merchantRes = await _merchantService.getAllMerchants();
+        if (merchantRes['success'] == true) {
+          final List<dynamic> mList = merchantRes['data'];
+          final myMerchant = mList.firstWhere(
+            (m) => m['user_id'].toString() == userId.toString(),
+            orElse: () => null,
+          );
+          if (myMerchant != null) {
+            _namaBisnis = myMerchant['nama_bisnis'] ?? '';
+          }
         }
       }
 

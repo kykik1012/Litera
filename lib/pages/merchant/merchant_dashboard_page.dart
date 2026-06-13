@@ -58,15 +58,7 @@ class _MerchantDashboardPageState extends State<MerchantDashboardPage> {
       final userId = await SharedPrefHelper.getUserId() ?? 0;
       if (userId == 0) return;
       
-      // 1. Ambil nama dan foto profil dari UserService
-      final response = await _userService.getUserById(userId);
-      if (response["success"] == true) {
-        final data = response["data"];
-        _namaBisnis = data["nama_bisnis"] ?? data["name"] ?? '';
-        _profilePicture = data["profile_picture"];
-      }
-
-      // 2. Ambil Merchant ID dan Status saat ini dari MerchantService
+      // 1. Ambil nama dan foto profil dari MerchantService
       final merchantRes = await _merchantService.getAllMerchants();
       if (merchantRes['success'] == true) {
         final List<dynamic> mList = merchantRes['data'];
@@ -76,11 +68,15 @@ class _MerchantDashboardPageState extends State<MerchantDashboardPage> {
         );
         
         if (myMerchant != null) {
+          _namaBisnis = myMerchant["nama_bisnis"] ?? '';
+          _profilePicture = myMerchant["profile_picture"];
           _merchantId = myMerchant['id'].toString();
           // Sesuaikan posisi switch dengan data dari server
           _isTokoActive = (myMerchant['status']?.toString().toLowerCase() == 'buka'); 
         }
       }
+
+      // 2. (Already handled above)
     } catch (e) {
       debugPrint("Error loading merchant profile: $e");
     }
@@ -95,9 +91,16 @@ class _MerchantDashboardPageState extends State<MerchantDashboardPage> {
         String? currentMerchantName;
         if (userId != 0) {
           try {
-            final userResponse = await _userService.getUserById(userId);
-            if (userResponse["success"] == true) {
-              currentMerchantName = userResponse["data"]["nama_bisnis"];
+            final merchantRes = await _merchantService.getAllMerchants();
+            if (merchantRes["success"] == true) {
+              final List<dynamic> mList = merchantRes['data'];
+              final myMerchant = mList.firstWhere(
+                (m) => m['user_id'].toString() == userId.toString(),
+                orElse: () => null,
+              );
+              if (myMerchant != null) {
+                currentMerchantName = myMerchant["nama_bisnis"];
+              }
             }
           } catch (_) {}
         }
@@ -287,46 +290,7 @@ class _MerchantDashboardPageState extends State<MerchantDashboardPage> {
                       ],
                     ),
                   ),
-                  Stack(
-                    children: [
-                      Container(
-                        width: 42,
-                        height: 42,
-                        decoration: const BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: Colors.white,
-                        ),
-                        child: const Icon(
-                          Icons.notifications_outlined,
-                          color: tealDark,
-                          size: 24,
-                        ),
-                      ),
-                      Positioned(
-                        right: 0,
-                        top: 0,
-                        child: Container(
-                          width: 18,
-                          height: 18,
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFF59E0B),
-                            shape: BoxShape.circle,
-                            border: Border.all(color: tealDark, width: 2),
-                          ),
-                          child: Center(
-                            child: Text(
-                              '2',
-                              style: GoogleFonts.poppins(
-                                fontSize: 9,
-                                fontWeight: FontWeight.w700,
-                                color: Colors.white,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
+                  const SizedBox(width: 42), // Placeholder untuk menjaga layout jika diperlukan, tapi bisa juga dihapus.
                 ],
               ),
             ),

@@ -3,7 +3,10 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../../helpers/shared_pref_helper.dart';
 import '../../services/user_service.dart';
+import '../../services/merchant_service.dart';
 import '../auth/login_page.dart';
+import '../../widgets/logout_bottom_sheet.dart';
+import '../merchant/merchant_edit_profil_usaha_page.dart';
 
 class MerchantProfilePage extends StatefulWidget {
   const MerchantProfilePage({super.key});
@@ -19,7 +22,14 @@ class _MerchantProfilePageState extends State<MerchantProfilePage> {
   String username = "";
   String email = "";
   String? profilePicture;
+  String _deskripsi = '';
+  String? _usahaDidirikan;
+  String? _jamBuka;
+  String? _jamTutup;
+  String? _imageUrl;
+
   final userService = UserService();
+  final merchantService = MerchantService();
 
   @override
   void initState() {
@@ -44,10 +54,39 @@ class _MerchantProfilePageState extends State<MerchantProfilePage> {
           }
           profilePicture = data["profile_picture"];
         }
+
+        final merchantRes = await merchantService.getAllMerchants();
+        if (merchantRes['success'] == true) {
+          final List<dynamic> mList = merchantRes['data'];
+          final myMerchant = mList.firstWhere(
+            (m) => m['user_id'].toString() == userId.toString(),
+            orElse: () => null,
+          );
+          if (myMerchant != null) {
+            _deskripsi = myMerchant["deskripsi"] ?? '';
+            _usahaDidirikan = myMerchant["usaha_didirikan"]?.toString();
+            _jamBuka = myMerchant["jam_buka"]?.toString();
+            _jamTutup = myMerchant["jam_tutup"]?.toString();
+            _imageUrl = myMerchant["image_url"]?.toString();
+          }
+        }
       } catch (_) {}
     }
 
     if (mounted) setState(() {});
+  }
+
+  int _calculateCompleteness() {
+    int filled = 0;
+    if (username.isNotEmpty && username != 'Nama Merchant') filled++;
+    if (_usahaDidirikan != null && _usahaDidirikan!.isNotEmpty) filled++;
+    if (_jamBuka != null && _jamBuka!.isNotEmpty) filled++;
+    if (_jamTutup != null && _jamTutup!.isNotEmpty) filled++;
+    if (_deskripsi.isNotEmpty && _deskripsi != 'Alamat Merchant') filled++;
+    if ((profilePicture != null && profilePicture!.isNotEmpty) || 
+        (_imageUrl != null && _imageUrl!.isNotEmpty)) filled++;
+    
+    return ((filled / 6) * 100).toInt();
   }
 
   Future<void> _logout() async {
@@ -61,43 +100,7 @@ class _MerchantProfilePageState extends State<MerchantProfilePage> {
   }
 
   void _showLogoutDialog() {
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-        ),
-        title: Text(
-          'Keluar',
-          style: GoogleFonts.poppins(
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-        content: Text(
-          'Apakah Anda yakin ingin keluar?',
-          style: GoogleFonts.poppins(fontSize: 14),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: Text(
-              'Batal',
-              style: GoogleFonts.poppins(color: const Color(0xFF6B7280)),
-            ),
-          ),
-          TextButton(
-            onPressed: () {
-              Navigator.pop(ctx);
-              _logout();
-            },
-            child: Text(
-              'Keluar',
-              style: GoogleFonts.poppins(color: Colors.red),
-            ),
-          ),
-        ],
-      ),
-    );
+    showLogoutBottomSheet(context, _logout);
   }
 
   @override
@@ -267,7 +270,12 @@ class _MerchantProfilePageState extends State<MerchantProfilePage> {
           SizedBox(
             width: double.infinity,
             child: ElevatedButton(
-              onPressed: () {},
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const MerchantEditProfilUsahaPage()),
+                );
+              },
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.white,
                 foregroundColor: tealDark,
@@ -317,7 +325,7 @@ class _MerchantProfilePageState extends State<MerchantProfilePage> {
           ),
           const SizedBox(height: 12),
           Text(
-            '65% • Bisa lebih maksimal!',
+            '${_calculateCompleteness()}% • ${_calculateCompleteness() == 100 ? "Profil sudah lengkap!" : "Bisa lebih maksimal!"}',
             style: GoogleFonts.poppins(
               fontSize: 13,
               fontWeight: FontWeight.w500,
@@ -326,7 +334,7 @@ class _MerchantProfilePageState extends State<MerchantProfilePage> {
           ),
           const SizedBox(height: 8),
           LinearProgressIndicator(
-            value: 0.65,
+            value: _calculateCompleteness() / 100.0,
             backgroundColor: Colors.grey[200],
             valueColor: const AlwaysStoppedAnimation<Color>(limeGreen),
             minHeight: 8,
@@ -343,7 +351,13 @@ class _MerchantProfilePageState extends State<MerchantProfilePage> {
           ),
           const SizedBox(height: 16),
           InkWell(
-            onTap: () {},
+            onTap: () async {
+              await Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const MerchantEditProfilUsahaPage()),
+              );
+              _loadUser();
+            },
             child: Container(
               padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
               decoration: BoxDecoration(

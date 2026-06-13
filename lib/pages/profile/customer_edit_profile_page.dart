@@ -60,7 +60,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
       } else {
         namaBisnisController.text = data["nama_bisnis"] ?? "";
         deskripsiController.text = data["deskripsi"] ?? "";
-        tahunController.text = data["tahun_berdiri"]?.toString() ?? "";
+        tahunController.text = data["usaha_didirikan"]?.toString() ?? "";
       }
     }
 
@@ -116,7 +116,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
           id: userId,
           namaBisnis: namaBisnisController.text,
           deskripsi: deskripsiController.text,
-          tahunBerdiri: int.parse(tahunController.text),
+          usahaDidirikan: tahunController.text,
         );
       }
 

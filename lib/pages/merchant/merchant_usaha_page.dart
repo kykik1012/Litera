@@ -5,9 +5,11 @@ import 'package:intl/intl.dart';
 import '../../helpers/shared_pref_helper.dart';
 import '../../services/user_service.dart';
 import '../../services/product_service.dart';
+import '../../services/merchant_service.dart';
 import '../../models/product.dart';
 import 'merchant_tambah_produk_page.dart';
 import 'merchant_edit_katalog_page.dart';
+import 'merchant_edit_profil_usaha_page.dart';
 
 class MerchantUsahaPage extends StatefulWidget {
   const MerchantUsahaPage({super.key});
@@ -19,11 +21,16 @@ class MerchantUsahaPage extends StatefulWidget {
 class _MerchantUsahaPageState extends State<MerchantUsahaPage> {
   final UserService _userService = UserService();
   final ProductService _productService = ProductService();
+  final MerchantService _merchantService = MerchantService();
 
   // Merchant info
   String _namaBisnis = '';
   String _deskripsi = '';
   String? _profilePicture;
+  String? _usahaDidirikan;
+  String? _jamBuka;
+  String? _jamTutup;
+  String? _imageUrl;
 
   // Products
   List<ProductModel> _products = [];
@@ -55,12 +62,23 @@ class _MerchantUsahaPageState extends State<MerchantUsahaPage> {
       final userId = await SharedPrefHelper.getUserId() ?? 0;
       if (userId == 0) return;
 
-      final response = await _userService.getUserById(userId);
-      if (response["success"] == true) {
-        final data = response["data"];
-        _namaBisnis = data["nama_bisnis"] ?? data["name"] ?? '';
-        _deskripsi = data["deskripsi"] ?? '';
-        _profilePicture = data["profile_picture"];
+      final merchantRes = await _merchantService.getAllMerchants();
+      if (merchantRes['success'] == true) {
+        final List<dynamic> mList = merchantRes['data'];
+        final myMerchant = mList.firstWhere(
+          (m) => m['user_id'].toString() == userId.toString(),
+          orElse: () => null,
+        );
+        
+        if (myMerchant != null) {
+          _namaBisnis = myMerchant["nama_bisnis"] ?? '';
+          _deskripsi = myMerchant["deskripsi"] ?? '';
+          _profilePicture = myMerchant["profile_picture"];
+          _usahaDidirikan = myMerchant["usaha_didirikan"]?.toString();
+          _jamBuka = myMerchant["jam_buka"]?.toString();
+          _jamTutup = myMerchant["jam_tutup"]?.toString();
+          _imageUrl = myMerchant["image_url"]?.toString();
+        }
       }
     } catch (e) {
       debugPrint("Error loading merchant profile: $e");
@@ -79,9 +97,16 @@ class _MerchantUsahaPageState extends State<MerchantUsahaPage> {
         
         if (userId != 0) {
           try {
-            final userResponse = await _userService.getUserById(userId);
-            if (userResponse["success"] == true) {
-              currentMerchantName = userResponse["data"]["nama_bisnis"];
+            final merchantRes = await _merchantService.getAllMerchants();
+            if (merchantRes["success"] == true) {
+              final List<dynamic> mList = merchantRes['data'];
+              final myMerchant = mList.firstWhere(
+                (m) => m['user_id'].toString() == userId.toString(),
+                orElse: () => null,
+              );
+              if (myMerchant != null) {
+                currentMerchantName = myMerchant["nama_bisnis"];
+              }
             }
           } catch (_) {}
         }
@@ -121,6 +146,19 @@ class _MerchantUsahaPageState extends State<MerchantUsahaPage> {
       decimalDigits: 0,
     );
     return formatter.format(price);
+  }
+
+  int _calculateCompleteness() {
+    int filled = 0;
+    if (_namaBisnis.isNotEmpty && _namaBisnis != 'Nama Merchant') filled++;
+    if (_usahaDidirikan != null && _usahaDidirikan!.isNotEmpty) filled++;
+    if (_jamBuka != null && _jamBuka!.isNotEmpty) filled++;
+    if (_jamTutup != null && _jamTutup!.isNotEmpty) filled++;
+    if (_deskripsi.isNotEmpty && _deskripsi != 'Alamat Merchant') filled++;
+    if ((_profilePicture != null && _profilePicture!.isNotEmpty) || 
+        (_imageUrl != null && _imageUrl!.isNotEmpty)) filled++;
+    
+    return ((filled / 6) * 100).toInt();
   }
 
   @override
@@ -256,12 +294,47 @@ class _MerchantUsahaPageState extends State<MerchantUsahaPage> {
               ],
             ),
             const SizedBox(height: 16),
+            // Progress Bar Kelengkapan Profil
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'Kelengkapan Profil Usaha',
+                      style: GoogleFonts.poppins(fontSize: 12, color: Colors.white70),
+                    ),
+                    Text(
+                      '${_calculateCompleteness()}%',
+                      style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.white),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 6),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(4),
+                  child: LinearProgressIndicator(
+                    value: _calculateCompleteness() / 100.0,
+                    backgroundColor: Colors.white.withOpacity(0.2),
+                    valueColor: const AlwaysStoppedAnimation<Color>(limeGreen),
+                    minHeight: 6,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
             // Tombol Edit Profil Usaha
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
                 onPressed: () {
-                  // TODO: Navigate to edit merchant profile
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const MerchantEditProfilUsahaPage(),
+                    ),
+                  );
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.white,

@@ -2,9 +2,13 @@ class MerchantModel {
   final String id;
   final String userId;
   final String namaBisnis;
-  final int? tahunBerdiri;
+  final String? usahaDidirikan;
+  final String? jamBuka;
+  final String? jamTutup;
   final String? deskripsi;
   final String? profilePicture;
+  final String? imageUrl;
+  final String? imageQr;
   final num? latitude;
   final num? longitude;
   final String status;
@@ -13,9 +17,13 @@ class MerchantModel {
     required this.id,
     required this.userId,
     required this.namaBisnis,
-    this.tahunBerdiri,
+    this.usahaDidirikan,
+    this.jamBuka,
+    this.jamTutup,
     this.deskripsi,
     this.profilePicture,
+    this.imageUrl,
+    this.imageQr,
     this.latitude,
     this.longitude,
     required this.status,
@@ -23,23 +31,19 @@ class MerchantModel {
 
   factory MerchantModel.fromJson(Map<String, dynamic> json) {
     return MerchantModel(
-      // Gunakan .toString() agar selalu aman jika API merespon int atau String
       id: json['id'].toString(), 
       userId: json['user_id'].toString(),
       namaBisnis: json['nama_bisnis'] as String,
-      
-      // Gunakan int.tryParse() untuk berjaga-jaga jika API mengirim angka dalam bentuk String
-      tahunBerdiri: json['tahun_berdiri'] != null 
-          ? int.tryParse(json['tahun_berdiri'].toString()) 
-          : null,
-          
+      usahaDidirikan: json['usaha_didirikan']?.toString(),
+      jamBuka: json['jam_buka']?.toString(),
+      jamTutup: json['jam_tutup']?.toString(),
       deskripsi: json['deskripsi'] as String?,
       profilePicture: json['profile_picture'] as String?,
-      
-      // Gunakan num untuk menerima baik int maupun double dari JSON
+      imageUrl: json['image_url'] as String?,
+      imageQr: json['image_qr'] as String?,
       latitude: json['latitude'] as num?,
       longitude: json['longitude'] as num?,
-      status: json['status'] ?? 'Tutup',
+      status: json['status']?.toString() ?? 'Tutup',
     );
   }
 
@@ -48,11 +52,16 @@ class MerchantModel {
       'id': id,
       'user_id': userId,
       'nama_bisnis': namaBisnis,
-      'tahun_berdiri': tahunBerdiri,
+      'usaha_didirikan': usahaDidirikan,
+      'jam_buka': jamBuka,
+      'jam_tutup': jamTutup,
       'deskripsi': deskripsi,
       'profile_picture': profilePicture,
+      'image_url': imageUrl,
+      'image_qr': imageQr,
       'latitude': latitude,
       'longitude': longitude,
+      'status': status,
     };
   }
 }

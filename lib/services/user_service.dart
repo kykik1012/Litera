@@ -69,7 +69,7 @@ class UserService {
     required int id,
     required String namaBisnis,
     required String deskripsi,
-    required int tahunBerdiri,
+    required String usahaDidirikan,
 
   }) async {
 
@@ -92,8 +92,8 @@ class UserService {
         "deskripsi":
             deskripsi,
 
-        "tahun_berdiri":
-            tahunBerdiri,
+        "usaha_didirikan":
+            usahaDidirikan,
       }),
     );
 

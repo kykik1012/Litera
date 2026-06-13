@@ -197,8 +197,8 @@ class _CustomerMerchantDetailPageState extends State<CustomerMerchantDetailPage>
     return Stack(
       fit: StackFit.expand,
       children: [
-        widget.merchant.profilePicture != null && widget.merchant.profilePicture!.isNotEmpty
-            ? Image.network(widget.merchant.profilePicture!, fit: BoxFit.cover)
+        widget.merchant.imageUrl != null && widget.merchant.imageUrl!.isNotEmpty
+            ? Image.network(widget.merchant.imageUrl!, fit: BoxFit.cover)
             : Container(color: darkGreen),
             
         Container(
@@ -223,7 +223,7 @@ class _CustomerMerchantDetailPageState extends State<CustomerMerchantDetailPage>
               ),
               const SizedBox(height: 4),
               Text(
-                "Berdiri sejak tahun: ${widget.merchant.tahunBerdiri ?? 'Tidak diketahui'}",
+                "Berdiri sejak tahun: ${(widget.merchant.usahaDidirikan != null) ? (DateTime.tryParse(widget.merchant.usahaDidirikan!)?.year?.toString() ?? widget.merchant.usahaDidirikan!) : 'Tidak diketahui'}",
                 style: TextStyle(color: limeGreen, fontSize: 13, fontWeight: FontWeight.w500),
               ),
               const Divider(color: Colors.white24, height: 20),
