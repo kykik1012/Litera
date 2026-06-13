@@ -214,7 +214,7 @@ class _CustomerDashboardPageState extends State<CustomerDashboardPage> {
       children: [
         TileLayer(
           urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-          userAgentPackageName: 'com.example.app',
+          userAgentPackageName: 'com.litera.news.app',
         ),
         MarkerLayer(
           markers: [

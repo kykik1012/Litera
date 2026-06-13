@@ -12,6 +12,7 @@ import '../../services/biometric_service.dart';
 import '../../services/auth_service.dart';
 import 'change_password_page.dart';
 import '../../constants/api.dart';
+import 'package:litera/pages/customer/customer_my_promo_page.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -276,7 +277,10 @@ class _ProfilePageState extends State<ProfilePage> {
                 title: 'Voucher',
                 subtitle: 'Voucher yang Kamu Punya',
                 onTap: () {
-                  // TODO: Navigate to voucher page
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const CustomerMyPromoPage()),
+                  );
                 },
               ),
               const SizedBox(height: 12),
@@ -467,4 +471,4 @@ class _StatBadge extends StatelessWidget {
     );
   }
 }
-
+

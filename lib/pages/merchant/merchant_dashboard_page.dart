@@ -5,10 +5,13 @@ import 'package:intl/intl.dart';
 import '../../helpers/shared_pref_helper.dart';
 import '../../services/user_service.dart';
 import '../../services/product_service.dart';
-import '../../services/merchant_service.dart'; // <--- TAMBAHAN IMPORT
+import '../../services/merchant_service.dart';
 import '../../models/product.dart';
 import 'merchant_edit_katalog_page.dart';
-import 'merchant_promo_bottomsheet.dart';
+import 'package:qr_flutter/qr_flutter.dart';
+
+// --- IMPORT HALAMAN BARU ---
+import 'merchant_kelola_promo.dart';
 
 class MerchantDashboardPage extends StatefulWidget {
   const MerchantDashboardPage({super.key});
@@ -20,21 +23,20 @@ class MerchantDashboardPage extends StatefulWidget {
 class _MerchantDashboardPageState extends State<MerchantDashboardPage> {
   final UserService _userService = UserService();
   final ProductService _productService = ProductService();
-  final MerchantService _merchantService = MerchantService(); // <--- TAMBAHAN SERVICE
+  final MerchantService _merchantService = MerchantService();
 
   String _namaBisnis = '';
   String? _profilePicture;
-  String _merchantId = ''; // <--- Menyimpan ID Merchant asli
+  String _merchantId = '';
   List<ProductModel> _products = [];
   
   bool _isLoading = true;
-  bool _isTokoActive = false; // Akan diisi otomatis dari database
-  bool _isLoadingStatus = false; // Loading khusus untuk tombol switch
+  bool _isTokoActive = false; 
+  bool _isLoadingStatus = false; 
 
   static const Color tealDark = Color(0xFF0D3B2E);
   static const Color tealMid = Color(0xFF145C54);
   static const Color tealGradientEnd = Color(0xFF1A8A7A);
-  static const Color saldoCardColor = Color(0xFF17584F);
   static const Color promoCardColor = Color(0xFF1E6E5E);
   static const Color limeGreen = Color(0xFFAEEA00);
 
@@ -46,12 +48,8 @@ class _MerchantDashboardPageState extends State<MerchantDashboardPage> {
 
   Future<void> _loadData() async {
     setState(() => _isLoading = true);
-    
-    // UBAH: Panggil profil DULU, baru produk. 
-    // Agar produk bisa difilter menggunakan nama bisnis yang sudah didapat.
     await _loadMerchantProfile();
     await _loadProducts();
-    
     if (mounted) setState(() => _isLoading = false);
   }
 
@@ -60,7 +58,6 @@ class _MerchantDashboardPageState extends State<MerchantDashboardPage> {
       final userId = await SharedPrefHelper.getUserId() ?? 0;
       if (userId == 0) return;
       
-      // 1. Ambil nama dan foto profil dari MerchantService
       final merchantRes = await _merchantService.getAllMerchants();
       if (merchantRes['success'] == true) {
         final List<dynamic> mList = merchantRes['data'];
@@ -75,12 +72,10 @@ class _MerchantDashboardPageState extends State<MerchantDashboardPage> {
           _merchantId = myMerchant['id'].toString();
           _isTokoActive = (myMerchant['status']?.toString().toLowerCase() == 'buka'); 
 
-          // --- DIPERBARUI: Timpa nama dengan data dari API Merchant ---
           if (myMerchant['nama_bisnis'] != null && myMerchant['nama_bisnis'].toString().isNotEmpty) {
             _namaBisnis = myMerchant['nama_bisnis'].toString();
           }
 
-          // Cek jika merchant punya foto profil/image_url spesifik
           if (myMerchant['profile_picture'] != null && myMerchant['profile_picture'].toString().isNotEmpty) {
              _profilePicture = myMerchant['profile_picture'].toString();
           } else if (myMerchant['image_url'] != null && myMerchant['image_url'].toString().isNotEmpty) {
@@ -88,8 +83,6 @@ class _MerchantDashboardPageState extends State<MerchantDashboardPage> {
           }
         }
       }
-
-      // 2. (Already handled above)
     } catch (e) {
       debugPrint("Error loading merchant profile: $e");
     }
@@ -100,26 +93,9 @@ class _MerchantDashboardPageState extends State<MerchantDashboardPage> {
       final response = await _productService.getAllProducts();
       if (response["success"] == true && response["data"] != null) {
         final List data = response["data"];
-        final userId = await SharedPrefHelper.getUserId() ?? 0;
-        String? currentMerchantName;
-        if (userId != 0) {
-          try {
-            final merchantRes = await _merchantService.getAllMerchants();
-            if (merchantRes["success"] == true) {
-              final List<dynamic> mList = merchantRes['data'];
-              final myMerchant = mList.firstWhere(
-                (m) => m['user_id'].toString() == userId.toString(),
-                orElse: () => null,
-              );
-              if (myMerchant != null) {
-                currentMerchantName = myMerchant["nama_bisnis"];
-              }
-            }
-          } catch (_) {}
-        }
-        final allProducts =
-            data.map((json) => ProductModel.fromJson(json)).toList();
-        if (currentMerchantName != null && currentMerchantName.isNotEmpty) {
+        final allProducts = data.map((json) => ProductModel.fromJson(json)).toList();
+        
+        if (_namaBisnis.isNotEmpty) {
           _products = allProducts
               .where((p) => p.namaBisnis.toLowerCase() == _namaBisnis.toLowerCase())
               .toList();
@@ -132,7 +108,6 @@ class _MerchantDashboardPageState extends State<MerchantDashboardPage> {
     }
   }
 
-  // --- FUNGSI UPDATE STATUS TOKO KE API ---
   Future<void> _toggleStatus(bool value) async {
     if (_merchantId.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -149,10 +124,8 @@ class _MerchantDashboardPageState extends State<MerchantDashboardPage> {
       
       if (response['success'] == true) {
         setState(() => _isTokoActive = value);
-        
         if (!mounted) return;
         
-        // --- ALERT SUKSES ---
         showDialog(
           context: context,
           builder: (ctx) => AlertDialog(
@@ -192,6 +165,75 @@ class _MerchantDashboardPageState extends State<MerchantDashboardPage> {
     }
   }
 
+  // --- FUNGSI BARU: MENAMPILKAN QR TOKO ---
+  void _tampilkanQRToko() {
+    if (_merchantId.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Data toko sedang dimuat, coba lagi.")));
+      return;
+    }
+
+    // JSON Rahasia untuk dibaca oleh Scanner Pelanggan
+    String qrData = '{"tipe": "toko_litera", "merchant_id": "$_merchantId"}';
+
+    showDialog(
+      context: context,
+      builder: (ctx) => Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        backgroundColor: Colors.white,
+        child: Padding(
+          padding: const EdgeInsets.all(24.0),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                "QR Code Toko Anda",
+                style: GoogleFonts.poppins(fontSize: 18, fontWeight: FontWeight.bold, color: tealDark),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                "Cetak dan pajang QR ini di kasir. Pelanggan dapat melakukan scan untuk melihat katalog produkmu.",
+                textAlign: TextAlign.center,
+                style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey[600]),
+              ),
+              const SizedBox(height: 24),
+              
+              // Widget pembuat gambar QR
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: Colors.grey.shade200, width: 2),
+                ),
+                child: QrImageView(
+                  data: qrData, 
+                  version: QrVersions.auto,
+                  size: 200.0,
+                  foregroundColor: tealDark,
+                ),
+              ),
+              
+              const SizedBox(height: 24),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () => Navigator.pop(ctx),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: limeGreen,
+                    foregroundColor: tealDark,
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                  child: const Text("Tutup", style: TextStyle(fontWeight: FontWeight.bold)),
+                ),
+              )
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   String _formatCurrency(num price) {
     return NumberFormat.currency(
       locale: 'id_ID',
@@ -216,7 +258,12 @@ class _MerchantDashboardPageState extends State<MerchantDashboardPage> {
                   children: [
                     _buildHeaderSection(),
                     _buildStatusOperasionalSection(),
-                    _buildPromoKilatSection(),
+                    
+                    _buildKelolaPromoCard(),
+                    
+                    // --- TOMBOL BARU UNTUK MEMBUKA QR ---
+                    _buildQrTokoCard(),
+
                     _buildKatalogSection(),
                     const SizedBox(height: 100),
                   ],
@@ -227,7 +274,7 @@ class _MerchantDashboardPageState extends State<MerchantDashboardPage> {
   }
 
   // ═══════════════════════════════════════════
-  // HEADER SECTION
+  // HEADER SECTION 
   // ═══════════════════════════════════════════
   Widget _buildHeaderSection() {
     return Container(
@@ -240,257 +287,246 @@ class _MerchantDashboardPageState extends State<MerchantDashboardPage> {
       ),
       child: SafeArea(
         bottom: false,
-        child: Column(
-          children: [
-            Padding(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-              child: Row(
-                children: [
-                  Container(
-                    width: 48,
-                    height: 48,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: Colors.white.withValues(alpha: 0.2),
-                      border: Border.all(
-                        color: Colors.white.withValues(alpha: 0.3),
-                        width: 2,
-                      ),
-                    ),
-                    child: _profilePicture != null
-                        ? ClipOval(
-                            child: Image.network(
-                              _profilePicture!,
-                              fit: BoxFit.cover,
-                              width: 48,
-                              height: 48,
-                              errorBuilder: (c, e, s) => const Icon(
-                                Icons.storefront_rounded,
-                                color: Colors.white70,
-                                size: 24,
-                              ),
-                            ),
-                          )
-                        : const Icon(
-                            Icons.storefront_rounded,
-                            color: Colors.white70,
-                            size: 24,
-                          ),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+          child: Row(
+            children: [
+              Container(
+                width: 56,
+                height: 56,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: Colors.white.withOpacity(0.2),
+                  border: Border.all(
+                    color: Colors.white.withOpacity(0.3),
+                    width: 2,
                   ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          _namaBisnis.isEmpty ? 'Nama Merchant' : _namaBisnis,
-                          style: GoogleFonts.poppins(
-                            fontSize: 18,
-                            fontWeight: FontWeight.w700,
-                            color: Colors.white,
-                          ),
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          'Mari kelola dan pantau usahamu\nmulai hari ini.',
-                          style: GoogleFonts.poppins(
-                            fontSize: 12,
-                            color: Colors.white.withValues(alpha: 0.8),
-                            height: 1.3,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(width: 42), // Placeholder untuk menjaga layout jika diperlukan, tapi bisa juga dihapus.
-                ],
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
-              child: _buildSaldoCard(),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  // ═══════════════════════════════════════════
-  // SALDO CARD
-  // ═══════════════════════════════════════════
-  Widget _buildSaldoCard() {
-    return Container(
-      width: double.infinity,
-      decoration: BoxDecoration(
-        color: saldoCardColor,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: Colors.white.withValues(alpha: 0.15),
-          width: 1,
-        ),
-      ),
-      child: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 14, 16, 10),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Row(
-                  children: [
-                    Container(
-                      width: 28,
-                      height: 28,
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFFFB800),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: const Icon(
-                        Icons.account_balance_wallet_rounded,
-                        color: Colors.white,
-                        size: 16,
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      'Saldo',
-                      style: GoogleFonts.poppins(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w500,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ],
                 ),
-                Row(
+                child: _profilePicture != null
+                    ? ClipOval(
+                        child: Image.network(
+                          _profilePicture!,
+                          fit: BoxFit.cover,
+                          width: 56,
+                          height: 56,
+                          errorBuilder: (c, e, s) => const Icon(Icons.storefront_rounded, color: Colors.white70, size: 28),
+                        ),
+                      )
+                    : const Icon(Icons.storefront_rounded, color: Colors.white70, size: 28),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Rp 0',
+                      _namaBisnis.isEmpty ? 'Nama Merchant' : _namaBisnis,
                       style: GoogleFonts.poppins(
                         fontSize: 20,
                         fontWeight: FontWeight.w700,
                         color: Colors.white,
                       ),
                     ),
-                    const SizedBox(width: 6),
-                    Icon(
-                      Icons.visibility_outlined,
-                      color: Colors.white.withValues(alpha: 0.7),
-                      size: 18,
+                    const SizedBox(height: 2),
+                    Text(
+                      'Mari kelola dan pantau usahamu hari ini.',
+                      style: GoogleFonts.poppins(
+                        fontSize: 12,
+                        color: Colors.white.withOpacity(0.8),
+                      ),
                     ),
                   ],
                 ),
-              ],
-            ),
-          ),
-          Container(height: 1, color: Colors.white.withValues(alpha: 0.1)),
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 10),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Transaksi hari ini',
-                          style: GoogleFonts.poppins(
-                            fontSize: 11,
-                            color: Colors.white.withValues(alpha: 0.7),
-                          ),
-                        ),
-                        const SizedBox(height: 2),
-                        Row(
-                          children: [
-                            Text(
-                              '0',
-                              style: GoogleFonts.poppins(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w700,
-                                color: Colors.white,
-                              ),
-                            ),
-                            const SizedBox(width: 6),
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 6, vertical: 2),
-                              decoration: BoxDecoration(
-                                color: const Color(0xFF2AAA8A)
-                                    .withValues(alpha: 0.3),
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  const Icon(Icons.trending_up,
-                                      color: Color(0xFF4ADE80), size: 12),
-                                  const SizedBox(width: 2),
-                                  Text(
-                                    '0%',
-                                    style: GoogleFonts.poppins(
-                                      fontSize: 10,
-                                      fontWeight: FontWeight.w600,
-                                      color: const Color(0xFF4ADE80),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
+              ),
+              Stack(
+                children: [
+                  Container(
+                    width: 42,
+                    height: 42,
+                    decoration: const BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: Colors.white,
+                    ),
+                    child: const Icon(
+                      Icons.notifications_outlined,
+                      color: tealDark,
+                      size: 24,
                     ),
                   ),
-                ),
-                Container(
-                  width: 1,
-                  height: 36,
-                  color: Colors.white.withValues(alpha: 0.15),
-                ),
-                Expanded(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Penjualan kotor hari ini',
+                  Positioned(
+                    right: 0,
+                    top: 0,
+                    child: Container(
+                      width: 18,
+                      height: 18,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF59E0B),
+                        shape: BoxShape.circle,
+                        border: Border.all(color: tealDark, width: 2),
+                      ),
+                      child: Center(
+                        child: Text(
+                          '2',
                           style: GoogleFonts.poppins(
-                            fontSize: 11,
-                            color: Colors.white.withValues(alpha: 0.7),
+                            fontSize: 9,
+                            fontWeight: FontWeight.w700,
+                            color: Colors.white,
                           ),
                         ),
-                        const SizedBox(height: 2),
-                        Row(
-                          children: [
-                            Text(
-                              'Rp 0',
-                              style: GoogleFonts.poppins(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w700,
-                                color: Colors.white,
-                              ),
-                            ),
-                            const SizedBox(width: 6),
-                            Icon(
-                              Icons.visibility_outlined,
-                              color: Colors.white.withValues(alpha: 0.5),
-                              size: 14,
-                            ),
-                          ],
-                        ),
-                      ],
+                      ),
                     ),
                   ),
-                ),
-              ],
-            ),
+                ],
+              ),
+            ],
           ),
-        ],
+        ),
+      ),
+    );
+  }
+
+  // ═══════════════════════════════════════════
+  // KELOLA PROMO 
+  // ═══════════════════════════════════════════
+  Widget _buildKelolaPromoCard() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
+      child: InkWell(
+        onTap: () {
+          // Navigasi ke halaman baru
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              // --- UBAH BAGIAN INI ---
+              builder: (context) => const MerchantKelolaPromoPage(), 
+            ),
+          );
+        },
+        borderRadius: BorderRadius.circular(16),
+        child: Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(18),
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
+              colors: [tealDark, promoCardColor],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                color: tealDark.withOpacity(0.2),
+                blurRadius: 12,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.2),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(Icons.local_offer, color: limeGreen, size: 28),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Kelola Promo',
+                      style: GoogleFonts.poppins(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.white,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Buat diskon baru untuk menarik lebih banyak pelanggan.',
+                      style: GoogleFonts.poppins(
+                        fontSize: 12,
+                        color: Colors.white.withOpacity(0.8),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              const Icon(Icons.chevron_right, color: Colors.white),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  // ═══════════════════════════════════════════
+  // TAMPILKAN QR TOKO KARTU BARU
+  // ═══════════════════════════════════════════
+  Widget _buildQrTokoCard() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+      child: InkWell(
+        onTap: _tampilkanQRToko,
+        borderRadius: BorderRadius.circular(16),
+        child: Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(18),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: Colors.grey.shade200),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.03),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: tealDark.withOpacity(0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(Icons.qr_code_2, color: tealDark, size: 28),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'QR Code Toko',
+                      style: GoogleFonts.poppins(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                        color: tealDark,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Tampilkan QR untuk dipindai oleh pelanggan.',
+                      style: GoogleFonts.poppins(
+                        fontSize: 12,
+                        color: Colors.grey[600],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              Icon(Icons.chevron_right, color: Colors.grey[400]),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -523,7 +559,7 @@ class _MerchantDashboardPageState extends State<MerchantDashboardPage> {
                   ? []
                   : [
                       BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.05),
+                        color: Colors.black.withOpacity(0.05),
                         blurRadius: 10,
                         offset: const Offset(0, 4),
                       ),
@@ -558,9 +594,7 @@ class _MerchantDashboardPageState extends State<MerchantDashboardPage> {
                         style: GoogleFonts.poppins(
                           fontSize: 15,
                           fontWeight: FontWeight.w700,
-                          color: _isTokoActive
-                              ? tealDark
-                              : const Color(0xFF1A1A2E),
+                          color: _isTokoActive ? tealDark : const Color(0xFF1A1A2E),
                         ),
                       ),
                       const SizedBox(height: 2),
@@ -574,8 +608,6 @@ class _MerchantDashboardPageState extends State<MerchantDashboardPage> {
                     ],
                   ),
                 ),
-                
-                // --- SWITCH BUTTON ---
                 Transform.scale(
                   scale: 1.1,
                   child: _isLoadingStatus
@@ -586,7 +618,7 @@ class _MerchantDashboardPageState extends State<MerchantDashboardPage> {
                         )
                       : Switch(
                           value: _isTokoActive,
-                          onChanged: _toggleStatus, // Memanggil fungsi update API
+                          onChanged: _toggleStatus,
                           activeThumbColor: tealDark,
                           activeTrackColor: Colors.white,
                           inactiveThumbColor: Colors.grey[400],
@@ -598,97 +630,6 @@ class _MerchantDashboardPageState extends State<MerchantDashboardPage> {
             ),
           ),
         ],
-      ),
-    );
-  }
-
-  // ═══════════════════════════════════════════
-  // PROMO KILAT
-  // ═══════════════════════════════════════════
-  Widget _buildPromoKilatSection() {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
-      child: Container(
-        width: double.infinity,
-        decoration: BoxDecoration(
-          gradient: const LinearGradient(
-            colors: [tealDark, promoCardColor],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: [
-            BoxShadow(
-              color: tealDark.withValues(alpha: 0.2),
-              blurRadius: 12,
-              offset: const Offset(0, 4),
-            ),
-          ],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(18, 18, 18, 14),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Promo Kilat',
-                    style: GoogleFonts.poppins(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w700,
-                      color: Colors.white,
-                    ),
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    'Buat Promo Kilat, tarik pelanggan baru dan ramaikan usahamu.',
-                    style: GoogleFonts.poppins(
-                      fontSize: 12,
-                      color: Colors.white.withValues(alpha: 0.8),
-                      height: 1.4,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(18, 0, 18, 18),
-              child: SizedBox(
-                width: double.infinity,
-                child: ElevatedButton.icon(
-                  onPressed: () {
-                    showModalBottomSheet(
-                      context: context,
-                      isScrollControlled: true,
-                      backgroundColor: Colors.transparent,
-                      builder: (_) =>
-                          MerchantPromoBottomSheet(products: _products),
-                    );
-                  },
-                  icon: const Icon(Icons.bolt_rounded, size: 20),
-                  label: Text(
-                    'Buat Promo',
-                    style: GoogleFonts.poppins(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.white,
-                    foregroundColor: tealDark,
-                    elevation: 0,
-                    padding: const EdgeInsets.symmetric(vertical: 13),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
       ),
     );
   }
@@ -742,17 +683,13 @@ class _MerchantDashboardPageState extends State<MerchantDashboardPage> {
                   shrinkWrap: true,
                   itemCount: _products.length > 5 ? 5 : _products.length,
                   separatorBuilder: (_, __) => const SizedBox(height: 12),
-                  itemBuilder: (context, index) =>
-                      _buildProductCard(_products[index]),
+                  itemBuilder: (context, index) => _buildProductCard(_products[index]),
                 ),
         ],
       ),
     );
   }
 
-  // ═══════════════════════════════════════════
-  // EMPTY KATALOG STATE
-  // ═══════════════════════════════════════════
   Widget _buildEmptyKatalog() {
     return Center(
       child: Padding(
@@ -795,9 +732,6 @@ class _MerchantDashboardPageState extends State<MerchantDashboardPage> {
     );
   }
 
-  // ═══════════════════════════════════════════
-  // PRODUCT CARD
-  // ═══════════════════════════════════════════
   Widget _buildProductCard(ProductModel product) {
     return Container(
       decoration: BoxDecoration(
@@ -805,7 +739,7 @@ class _MerchantDashboardPageState extends State<MerchantDashboardPage> {
         borderRadius: BorderRadius.circular(14),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
+            color: Colors.black.withOpacity(0.04),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -828,21 +762,18 @@ class _MerchantDashboardPageState extends State<MerchantDashboardPage> {
                       fit: BoxFit.cover,
                       errorBuilder: (c, e, s) => Container(
                         color: Colors.grey[200],
-                        child: Icon(Icons.fastfood_rounded,
-                            color: Colors.grey[400], size: 32),
+                        child: Icon(Icons.fastfood_rounded, color: Colors.grey[400], size: 32),
                       ),
                     )
                   : Container(
                       color: Colors.grey[200],
-                      child: Icon(Icons.fastfood_rounded,
-                          color: Colors.grey[400], size: 32),
+                      child: Icon(Icons.fastfood_rounded, color: Colors.grey[400], size: 32),
                     ),
             ),
           ),
           Expanded(
             child: Padding(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -880,12 +811,9 @@ class _MerchantDashboardPageState extends State<MerchantDashboardPage> {
                         ),
                       ),
                       Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 10, vertical: 4),
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                         decoration: BoxDecoration(
-                          color: product.isAvailable
-                              ? limeGreen
-                              : Colors.grey[300],
+                          color: product.isAvailable ? limeGreen : Colors.grey[300],
                           borderRadius: BorderRadius.circular(4),
                         ),
                         child: Text(
@@ -893,9 +821,7 @@ class _MerchantDashboardPageState extends State<MerchantDashboardPage> {
                           style: GoogleFonts.poppins(
                             fontSize: 10,
                             fontWeight: FontWeight.w600,
-                            color: product.isAvailable
-                                ? tealDark
-                                : Colors.grey[600],
+                            color: product.isAvailable ? tealDark : Colors.grey[600],
                           ),
                         ),
                       ),

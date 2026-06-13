@@ -9,8 +9,10 @@ import 'package:litera/pages/super_admin/kelola_review.dart';
 import 'package:litera/pages/merchant/merchant_dashboard_page.dart';
 import 'package:litera/pages/merchant/merchant_usaha_page.dart';
 import 'package:litera/pages/merchant/merchant_ulasan_page.dart';
+import 'package:litera/pages/customer/customer_promo_page.dart';
 import 'package:litera/pages/customer/customer_dashboard_page.dart';
 import 'package:litera/pages/customer/customer_jelajah_page.dart';
+import 'package:litera/pages/customer/customer_scanner.dart'; // Pastikan file ini ada di folder lib/pages/customer/
 import 'package:litera/pages/profile/customer_profile_page.dart';
 import 'package:litera/pages/profile/merchant_profile_page.dart';
 
@@ -57,9 +59,10 @@ class _MainScreenState extends State<MainScreen> {
       ];
     } else if (_userRole == 1) { // MERCHANT
       return [
-        MerchantDashboardPage(),
+        const MerchantDashboardPage(),
         const MerchantUsahaPage(),
-        const Center(child: Text("Halaman Pindai Voucher")), // Tombol Tengah
+        // Menu tengah Merchant diganti menjadi halaman kosong sementara (bisa diganti Tarik Saldo nanti)
+        const Center(child: Text("Halaman Tarik Saldo")), 
         const MerchantUlasanPage(),
         const MerchantProfilePage(),
       ];
@@ -67,8 +70,9 @@ class _MainScreenState extends State<MainScreen> {
       return [
         const CustomerDashboardPage(),
         const CustomerJelajahPage(),
-        const Center(child: Text("Halaman Pindai Objek")), // Tombol Tengah
-        const Center(child: Text("Halaman Promo")),
+        // Menu tengah Customer diisi dengan Scanner QR
+        const CustomerScannerPage(), 
+        const CustomerPromoPage(),
         const ProfilePage(),
       ];
     }
@@ -93,7 +97,7 @@ class _MainScreenState extends State<MainScreen> {
               ),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.05),
+                  color: Colors.black.withOpacity(0.05),
                   blurRadius: 10,
                   offset: const Offset(0, -4),
                 ),
@@ -168,7 +172,7 @@ class _MainScreenState extends State<MainScreen> {
                   border: Border.all(color: Colors.white, width: 4), // Border putih pembatas
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.1),
+                      color: Colors.black.withOpacity(0.1),
                       blurRadius: 8,
                       offset: const Offset(0, 4),
                     ),
@@ -210,7 +214,7 @@ class _MainScreenState extends State<MainScreen> {
       _buildNavItem(0, Icons.home_rounded, "Beranda"),
       _buildNavItem(1, Icons.storefront_outlined, "Usaha"),
       // Merchant: Background Hijau Tua, Ikon Putih
-      _buildCenterNavItem(2, Icons.qr_code_scanner_rounded, "Pindai", darkGreen, Colors.white),
+      _buildCenterNavItem(2, Icons.account_balance_wallet_outlined, "Tarik", darkGreen, Colors.white),
       _buildNavItem(3, Icons.star_border_rounded, "Ulasan"),
       _buildNavItem(4, Icons.person_outline_rounded, "Profil"),
     ];
@@ -221,7 +225,7 @@ class _MainScreenState extends State<MainScreen> {
       _buildNavItem(0, Icons.home_rounded, "Beranda"),
       _buildNavItem(1, Icons.explore_outlined, "Jelajah"),
       // Customer: Background Hijau Stabilo, Ikon Hijau Tua
-      _buildCenterNavItem(2, Icons.camera_alt_outlined, "Pindai", limeGreen, darkGreen),
+      _buildCenterNavItem(2, Icons.qr_code_scanner_rounded, "Pindai", limeGreen, darkGreen),
       _buildNavItem(3, Icons.local_offer_outlined, "Promo"),
       _buildNavItem(4, Icons.person_outline_rounded, "Profil"),
     ];

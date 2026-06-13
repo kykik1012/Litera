@@ -88,4 +88,108 @@ class PromotionService {
       };
     }
   }
+
+  // --- MENGAMBIL SEMUA VOUCHER CUSTOMER ---
+  Future<Map<String, dynamic>> getCustomerVouchers() async {
+    try {
+      final token = await SharedPrefHelper.getToken();
+
+      final response = await http.get(
+        Uri.parse('${Api.baseUrl}/customer-vouchers'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+      );
+
+      return jsonDecode(response.body);
+    } catch (e) {
+      return {
+        'success': false,
+        'message': e.toString(),
+      };
+    }
+  }
+
+  // --- FUNGSI MENGEDIT PROMO ---
+  Future<Map<String, dynamic>> updatePromotion({
+    required String promotionId,
+    required int productId,
+    required String tipePromo,
+    required int diskon,
+    required int kuota,
+    required String tanggalBerlaku,
+    required String tanggalExpired,
+  }) async {
+    try {
+      final token = await SharedPrefHelper.getToken();
+
+      // Sesuaikan URL ini dengan endpoint update di backend-mu
+      // Contoh standar REST API: PUT /api/promotions/{id}
+      final response = await http.put(
+        Uri.parse('${Api.baseUrl}/promotions/$promotionId'), 
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+        body: jsonEncode({
+          'product_id': productId,
+          'tipe_promo': tipePromo,
+          'diskon': diskon,
+          'kuota': kuota,
+          'tanggal_berlaku': tanggalBerlaku,
+          'tanggal_expired': tanggalExpired,
+        }),
+      );
+
+      return jsonDecode(response.body);
+    } catch (e) {
+      return {
+        'success': false,
+        'message': e.toString(),
+      };
+    }
+  }
+
+  Future<Map<String, dynamic>> deletePromotion(String promotionId) async {
+    try {
+      final token = await SharedPrefHelper.getToken();
+
+      final response = await http.delete(
+        Uri.parse('${Api.baseUrl}/promotions/$promotionId'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+      );
+
+      return jsonDecode(response.body);
+    } catch (e) {
+      return {
+        'success': false,
+        'message': e.toString(),
+      };
+    }
+  }
+  // --- FUNGSI MENGGUNAKAN (REDEEM) VOUCHER CUSTOMER ---
+  Future<Map<String, dynamic>> useCustomerVoucher(String voucherId) async {
+    try {
+      final token = await SharedPrefHelper.getToken();
+
+      final response = await http.put(
+        Uri.parse('${Api.baseUrl}/customer-vouchers/use/$voucherId'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+      );
+
+      return jsonDecode(response.body);
+    } catch (e) {
+      return {
+        'success': false,
+        'message': e.toString(),
+      };
+    }
+  }
 }

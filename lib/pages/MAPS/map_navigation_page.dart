@@ -215,7 +215,7 @@ class _MapNavigationPageState extends State<MapNavigationPage> {
               children: [
                 TileLayer(
                   urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                  userAgentPackageName: 'com.litera.app', 
+                  userAgentPackageName: 'com.litera.news.app', 
                 ),
                 PolylineLayer(
                   polylines: [
