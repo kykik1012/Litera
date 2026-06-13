@@ -46,10 +46,12 @@ class _MerchantDashboardPageState extends State<MerchantDashboardPage> {
 
   Future<void> _loadData() async {
     setState(() => _isLoading = true);
-    await Future.wait([
-      _loadMerchantProfile(),
-      _loadProducts(),
-    ]);
+    
+    // UBAH: Panggil profil DULU, baru produk. 
+    // Agar produk bisa difilter menggunakan nama bisnis yang sudah didapat.
+    await _loadMerchantProfile();
+    await _loadProducts();
+    
     if (mounted) setState(() => _isLoading = false);
   }
 
@@ -71,8 +73,19 @@ class _MerchantDashboardPageState extends State<MerchantDashboardPage> {
           _namaBisnis = myMerchant["nama_bisnis"] ?? '';
           _profilePicture = myMerchant["profile_picture"];
           _merchantId = myMerchant['id'].toString();
-          // Sesuaikan posisi switch dengan data dari server
           _isTokoActive = (myMerchant['status']?.toString().toLowerCase() == 'buka'); 
+
+          // --- DIPERBARUI: Timpa nama dengan data dari API Merchant ---
+          if (myMerchant['nama_bisnis'] != null && myMerchant['nama_bisnis'].toString().isNotEmpty) {
+            _namaBisnis = myMerchant['nama_bisnis'].toString();
+          }
+
+          // Cek jika merchant punya foto profil/image_url spesifik
+          if (myMerchant['profile_picture'] != null && myMerchant['profile_picture'].toString().isNotEmpty) {
+             _profilePicture = myMerchant['profile_picture'].toString();
+          } else if (myMerchant['image_url'] != null && myMerchant['image_url'].toString().isNotEmpty) {
+             _profilePicture = myMerchant['image_url'].toString();
+          }
         }
       }
 
@@ -108,7 +121,7 @@ class _MerchantDashboardPageState extends State<MerchantDashboardPage> {
             data.map((json) => ProductModel.fromJson(json)).toList();
         if (currentMerchantName != null && currentMerchantName.isNotEmpty) {
           _products = allProducts
-              .where((p) => p.namaBisnis == currentMerchantName)
+              .where((p) => p.namaBisnis.toLowerCase() == _namaBisnis.toLowerCase())
               .toList();
         } else {
           _products = allProducts;

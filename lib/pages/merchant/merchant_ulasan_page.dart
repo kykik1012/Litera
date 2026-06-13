@@ -41,7 +41,6 @@ class _MerchantUlasanPageState extends State<MerchantUlasanPage> {
   Future<void> _loadData() async {
     setState(() => _isLoading = true);
     try {
-      // Get merchant's business name
       final userId = await SharedPrefHelper.getUserId() ?? 0;
       if (userId != 0) {
         final merchantRes = await _merchantService.getAllMerchants();
@@ -57,7 +56,7 @@ class _MerchantUlasanPageState extends State<MerchantUlasanPage> {
         }
       }
 
-      // Fetch all reviews for this merchant
+      // 3. Tarik semua ulasan menggunakan nama bisnis yang sudah akurat
       if (_namaBisnis.isNotEmpty) {
         final reviewsData = await _reviewService.getReviewsByMerchantName(_namaBisnis);
         _allReviews = reviewsData.map((json) => ReviewModel.fromJson(json)).toList();
@@ -68,6 +67,8 @@ class _MerchantUlasanPageState extends State<MerchantUlasanPage> {
           if (b.submittedAt == null) return -1;
           return b.submittedAt!.compareTo(a.submittedAt!);
         });
+      } else {
+         _allReviews = [];
       }
     } catch (e) {
       debugPrint("Error loading reviews: $e");
@@ -503,22 +504,74 @@ class _MerchantUlasanPageState extends State<MerchantUlasanPage> {
           // Review image (if any)
           if (review.imageUrl != null && review.imageUrl!.isNotEmpty) ...[
             const SizedBox(height: 12),
-            ClipRRect(
-              borderRadius: BorderRadius.circular(12),
-              child: Image.network(
-                review.imageUrl!,
-                width: double.infinity,
-                height: 180,
-                fit: BoxFit.cover,
-                errorBuilder: (c, e, s) => Container(
+            
+            // --- TAMBAHKAN GESTURE DETECTOR DI SINI ---
+            GestureDetector(
+              onTap: () {
+                // Memunculkan Pop-up Gambar Full Screen
+                showDialog(
+                  context: context,
+                  builder: (BuildContext context) {
+                    return Dialog(
+                      backgroundColor: Colors.transparent, // Background transparan
+                      insetPadding: EdgeInsets.zero, // Hilangkan batas pinggir agar full screen
+                      child: Stack(
+                        alignment: Alignment.center,
+                        children: [
+                          // 1. Background Hitam Transparan (Bisa diklik untuk menutup)
+                          GestureDetector(
+                            onTap: () => Navigator.of(context).pop(),
+                            child: Container(
+                              width: double.infinity,
+                              height: double.infinity,
+                              color: Colors.black87,
+                            ),
+                          ),
+                          // 2. Widget Gambar yang bisa di-Zoom
+                          InteractiveViewer(
+                            panEnabled: true, // Bisa digeser saat di-zoom
+                            minScale: 0.5,
+                            maxScale: 4.0, // Batas maksimal zoom
+                            child: Image.network(
+                              review.imageUrl!,
+                              fit: BoxFit.contain, // Tampilkan seluruh gambar tanpa terpotong
+                              width: double.infinity,
+                              height: double.infinity,
+                            ),
+                          ),
+                          // 3. Tombol Silang (Tutup) di Pojok Kanan Atas
+                          Positioned(
+                            top: 40,
+                            right: 20,
+                            child: IconButton(
+                              icon: const Icon(Icons.close, color: Colors.white, size: 32),
+                              onPressed: () => Navigator.of(context).pop(),
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                );
+              },
+              // Tampilan Gambar Kecil di dalam List
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(12),
+                child: Image.network(
+                  review.imageUrl!,
+                  width: double.infinity,
                   height: 180,
-                  decoration: BoxDecoration(
-                    color: Colors.grey[200],
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Center(
-                    child: Icon(Icons.broken_image_outlined, 
-                      color: Colors.grey[400], size: 32),
+                  fit: BoxFit.cover,
+                  errorBuilder: (c, e, s) => Container(
+                    height: 180,
+                    decoration: BoxDecoration(
+                      color: Colors.grey[200],
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Center(
+                      child: Icon(Icons.broken_image_outlined, 
+                        color: Colors.grey[400], size: 32),
+                    ),
                   ),
                 ),
               ),

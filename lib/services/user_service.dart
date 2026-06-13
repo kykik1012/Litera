@@ -63,27 +63,16 @@ class UserService {
   }
 
   // UPDATE MERCHANT
-  Future<Map<String, dynamic>>
-  updateMerchant({
-
+  Future<Map<String, dynamic>> updateMerchant({
     required int id,
     required String namaBisnis,
     required String deskripsi,
     required String usahaDidirikan,
 
   }) async {
-
-    final response =
-        await http.put(
-
-      Uri.parse(
-        "${Api.baseUrl}/users/$id",
-      ),
-
-      headers:
-          await ApiHelper
-              .authHeaders(),
-
+    final response = await http.put(
+      Uri.parse("${Api.baseUrl}/users/$id"),
+      headers: await ApiHelper.authHeaders(),
       body: jsonEncode({
 
         "nama_bisnis":
@@ -97,9 +86,7 @@ class UserService {
       }),
     );
 
-    return jsonDecode(
-      response.body,
-    );
+    return jsonDecode(response.body);
   }
 
   // UPLOAD PROFILE PICTURE
