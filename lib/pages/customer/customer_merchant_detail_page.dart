@@ -203,8 +203,8 @@ class _CustomerMerchantDetailPageState extends State<CustomerMerchantDetailPage>
     return Stack(
       fit: StackFit.expand,
       children: [
-        widget.merchant.profilePicture != null && widget.merchant.profilePicture!.isNotEmpty
-            ? Image.network(widget.merchant.profilePicture!, fit: BoxFit.cover)
+        widget.merchant.imageUrl != null && widget.merchant.imageUrl!.isNotEmpty
+            ? Image.network(widget.merchant.imageUrl!, fit: BoxFit.cover)
             : Container(color: darkGreen),
             
         Container(
@@ -228,31 +228,10 @@ class _CustomerMerchantDetailPageState extends State<CustomerMerchantDetailPage>
                 style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 4),
-              
-              // ========================================================
-              // TAMPILAN WIDGET TANGGAL & JAM OPERASIONAL
-              // ========================================================
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    "Berdiri sejak: $tanggalBerdiri",
-                    style: const TextStyle(color: Colors.amber, fontSize: 12),
-                  ),
-                  const SizedBox(height: 4),
-                  Row(
-                    children: [
-                      const Icon(Icons.access_time, color: Colors.white70, size: 14),
-                      const SizedBox(width: 4),
-                      Text(
-                        "Jam Operasional: ${widget.merchant.jamBuka ?? '-'} s.d ${widget.merchant.jamTutup ?? '-'}",
-                        style: const TextStyle(color: Colors.white70, fontSize: 12),
-                      ),
-                    ],
-                  ),
-                ],
-              ), // <--- Koma ini sebelumnya terlewat
-              
+              Text(
+                "Berdiri sejak tahun: ${(widget.merchant.usahaDidirikan != null) ? (DateTime.tryParse(widget.merchant.usahaDidirikan!)?.year?.toString() ?? widget.merchant.usahaDidirikan!) : 'Tidak diketahui'}",
+                style: TextStyle(color: limeGreen, fontSize: 13, fontWeight: FontWeight.w500),
+              ),
               const Divider(color: Colors.white24, height: 20),
               
               Text(

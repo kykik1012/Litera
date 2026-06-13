@@ -93,18 +93,7 @@ class _MerchantTambahProdukPageState extends State<MerchantTambahProdukPage> {
       final userId = await SharedPrefHelper.getUserId() ?? 0;
       if (userId == 0) return;
 
-      // Coba ambil dari data user langsung
-      final userResponse = await _userService.getUserById(userId);
-      if (userResponse["success"] == true) {
-        final userData = userResponse["data"];
-        // Jika ada merchant_id di data user
-        if (userData["merchant_id"] != null) {
-          _merchantId = int.tryParse(userData["merchant_id"].toString());
-          return;
-        }
-      }
-
-      // Jika tidak, cari dari daftar merchants
+      // Cari dari daftar merchants
       final merchantResponse = await _merchantService.getAllMerchants();
       if (merchantResponse["success"] == true && merchantResponse["data"] != null) {
         final List merchants = merchantResponse["data"];

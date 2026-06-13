@@ -67,20 +67,22 @@ class UserService {
     required int id,
     required String namaBisnis,
     required String deskripsi,
-    required String usahaDidirikan, // Diubah dari int tahunBerdiri ke String format tanggal (YYYY-MM-DD)
-    required String jamBuka,        // Tambahan parameter baru
-    required String jamTutup,       // Tambahan parameter baru
+    required String usahaDidirikan,
+
   }) async {
     final response = await http.put(
       Uri.parse("${Api.baseUrl}/users/$id"),
       headers: await ApiHelper.authHeaders(),
       body: jsonEncode({
-        "nama_bisnis": namaBisnis,
-        "deskripsi": deskripsi,
-        // Sesuaikan dengan key JSON yang diminta backend temanmu:
-        "usaha_didirikan": usahaDidirikan, 
-        "jam_buka": jamBuka,
-        "jam_tutup": jamTutup,
+
+        "nama_bisnis":
+            namaBisnis,
+
+        "deskripsi":
+            deskripsi,
+
+        "usaha_didirikan":
+            usahaDidirikan,
       }),
     );
 

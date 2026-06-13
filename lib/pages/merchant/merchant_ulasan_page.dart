@@ -5,7 +5,7 @@ import 'package:intl/intl.dart';
 import '../../helpers/shared_pref_helper.dart';
 import '../../services/review_service.dart';
 import '../../services/user_service.dart';
-import '../../services/merchant_service.dart'; // <--- TAMBAHAN IMPORT
+import '../../services/merchant_service.dart';
 import '../../models/review.dart';
 
 class MerchantUlasanPage extends StatefulWidget {
@@ -18,7 +18,7 @@ class MerchantUlasanPage extends StatefulWidget {
 class _MerchantUlasanPageState extends State<MerchantUlasanPage> {
   final ReviewService _reviewService = ReviewService();
   final UserService _userService = UserService();
-  final MerchantService _merchantService = MerchantService(); // <--- TAMBAHAN SERVICE
+  final MerchantService _merchantService = MerchantService();
 
   List<ReviewModel> _allReviews = [];
   bool _isLoading = true;
@@ -43,13 +43,6 @@ class _MerchantUlasanPageState extends State<MerchantUlasanPage> {
     try {
       final userId = await SharedPrefHelper.getUserId() ?? 0;
       if (userId != 0) {
-        // 1. Ambil data dasar dari UserService (sebagai fallback)
-        final userResponse = await _userService.getUserById(userId);
-        if (userResponse["success"] == true) {
-          _namaBisnis = userResponse["data"]["name"] ?? '';
-        }
-
-        // 2. Ambil Nama Bisnis aslinya dari MerchantService (Prioritas Utama)
         final merchantRes = await _merchantService.getAllMerchants();
         if (merchantRes['success'] == true) {
           final List<dynamic> mList = merchantRes['data'];
@@ -57,9 +50,8 @@ class _MerchantUlasanPageState extends State<MerchantUlasanPage> {
             (m) => m['user_id'].toString() == userId.toString(),
             orElse: () => null,
           );
-          
-          if (myMerchant != null && myMerchant['nama_bisnis'] != null && myMerchant['nama_bisnis'].toString().isNotEmpty) {
-            _namaBisnis = myMerchant['nama_bisnis'].toString();
+          if (myMerchant != null) {
+            _namaBisnis = myMerchant['nama_bisnis'] ?? '';
           }
         }
       }

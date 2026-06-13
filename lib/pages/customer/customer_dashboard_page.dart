@@ -9,6 +9,9 @@ import 'package:litera/models/merchant.dart';
 import 'package:litera/models/thematic_route.dart';
 import '../../services/merchant_service.dart';
 import '../../services/thematic_service.dart';
+import '../../services/product_service.dart';
+import 'customer_route_preview_page.dart';
+import 'customer_merchant_detail_page.dart';
 
 class CustomerDashboardPage extends StatefulWidget {
   const CustomerDashboardPage({super.key});
@@ -21,12 +24,20 @@ class _CustomerDashboardPageState extends State<CustomerDashboardPage> {
   final MapController _mapController = MapController();
   final MerchantService _merchantService = MerchantService();
   final ThematicRouteService _routeService = ThematicRouteService();
+  final ProductService _productService = ProductService();
   final TextEditingController _searchController = TextEditingController();
 
   String _username = "Customer";
   LatLng? _currentLocation;
   List<MerchantModel> _merchants = [];
-  ThematicRouteModel? _recommendedRoute;
+  List<MerchantModel> _filteredMerchants = [];
+  List<dynamic> _allProducts = [];
+  List<String> _categories = ["Semua"];
+  String _selectedCategory = "Semua";
+  
+  MerchantModel? _selectedMerchant;
+  List<ThematicRouteModel> _routes = [];
+  final PageController _pageController = PageController(viewportFraction: 0.95);
   bool _isLoading = true;
 
   @override
@@ -38,6 +49,7 @@ class _CustomerDashboardPageState extends State<CustomerDashboardPage> {
   @override // Tambahkan @override di sini
   void dispose() {
     _searchController.dispose();
+    _pageController.dispose();
     super.dispose();
   }
 
@@ -48,17 +60,30 @@ class _CustomerDashboardPageState extends State<CustomerDashboardPage> {
     try {
       final merchantRes = await _merchantService.getAllMerchants();
       final routeRes = await _routeService.getAllThematicRoutes();
+      final productRes = await _productService.getAllProducts();
 
       if (merchantRes['success'] == true) {
         final List<dynamic> mData = merchantRes['data'];
         _merchants = mData.map((e) => MerchantModel.fromJson(e)).toList();
+        _filteredMerchants = List.from(_merchants);
       }
 
       if (routeRes['success'] == true) {
         final List<dynamic> rData = routeRes['data'];
         if (rData.isNotEmpty) {
-          _recommendedRoute = ThematicRouteModel.fromJson(rData[0]); 
+          _routes = rData.map((e) => ThematicRouteModel.fromJson(e)).where((r) => !r.isDelete).toList();
         }
+      }
+
+      if (productRes['success'] == true) {
+        _allProducts = productRes['data'];
+        final Set<String> catSet = {};
+        for (var p in _allProducts) {
+          if (p['category_name'] != null && p['category_name'].toString().isNotEmpty) {
+            catSet.add(p['category_name'].toString());
+          }
+        }
+        _categories = ["Semua", ...catSet.toList()];
       }
     } catch (e) {
       debugPrint("Error loading data: $e");
@@ -92,6 +117,28 @@ class _CustomerDashboardPageState extends State<CustomerDashboardPage> {
     }
   }
 
+  void _filterMerchantsByCategory(String category) {
+    setState(() {
+      _selectedCategory = category;
+      _selectedMerchant = null; // Reset selection
+      if (category == "Semua") {
+        _filteredMerchants = List.from(_merchants);
+      } else {
+        // Cari nama_bisnis dari product yang punya category_name tersebut
+        final Set<String> merchantNamesWithCat = {};
+        for (var p in _allProducts) {
+          if (p['category_name'] == category && p['nama_bisnis'] != null) {
+            merchantNamesWithCat.add(p['nama_bisnis'].toString().toLowerCase());
+          }
+        }
+        
+        _filteredMerchants = _merchants.where((m) {
+          return merchantNamesWithCat.contains(m.namaBisnis.toLowerCase());
+        }).toList();
+      }
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
@@ -123,7 +170,10 @@ class _CustomerDashboardPageState extends State<CustomerDashboardPage> {
                   label: const Text("Pusatkan kembali", style: TextStyle(fontWeight: FontWeight.bold)),
                 ),
                 const SizedBox(height: 16),
-                if (_recommendedRoute != null) _buildRecommendedRouteCard(),
+                if (_selectedMerchant != null)
+                  _buildSelectedMerchantCard()
+                else if (_routes.isNotEmpty) 
+                  _buildRecommendedRouteSlider(),
               ],
             ),
           ),
@@ -172,17 +222,23 @@ class _CustomerDashboardPageState extends State<CustomerDashboardPage> {
                   ),
                 ),
               ),
-            ..._merchants.where((m) => m.latitude != null && m.longitude != null).map((merchant) {
+            ..._filteredMerchants.where((m) => m.latitude != null && m.longitude != null).map((merchant) {
               return Marker(
                 point: LatLng(merchant.latitude!.toDouble(), merchant.longitude!.toDouble()),
                 width: 120,
                 height: 80,
-                child: Column(
-                  children: [
-                    Container(
+                child: GestureDetector(
+                  onTap: () {
+                    setState(() {
+                      _selectedMerchant = merchant;
+                    });
+                  },
+                  child: Column(
+                    children: [
+                      Container(
                       padding: const EdgeInsets.all(6),
-                      decoration: const BoxDecoration(
-                        color: Color(0xFFAEEA00),
+                      decoration: BoxDecoration(
+                        color: merchant.status.toLowerCase() == 'tutup' ? Colors.grey : const Color(0xFFAEEA00),
                         shape: BoxShape.circle,
                       ),
                       child: const Icon(Icons.restaurant, color: Color(0xFF003D33), size: 18),
@@ -200,8 +256,9 @@ class _CustomerDashboardPageState extends State<CustomerDashboardPage> {
                     ),
                   ],
                 ),
-              );
-            }),
+              ),
+            );
+          }),
           ],
         ),
       ],
@@ -252,10 +309,6 @@ class _CustomerDashboardPageState extends State<CustomerDashboardPage> {
                   ],
                 ),
               ),
-              IconButton(
-                onPressed: () {}, 
-                icon: const Icon(Icons.notifications, color: Colors.white),
-              )
             ],
           ),
         ),
@@ -301,18 +354,51 @@ class _CustomerDashboardPageState extends State<CustomerDashboardPage> {
                 const SizedBox(height: 12),
                 
                 // Filter Chips
-                // SingleChildScrollView(
-                //   scrollDirection: Axis.horizontal,
-                //   child: Row(
-                //     children: [
-                //       _buildChip("Semua", true),
-                //       const SizedBox(width: 8),
-                //       _buildChip("Legenda Kuliner", false),
-                //       const SizedBox(width: 8),
-                //       _buildChip("Bengkel Kriya", false),
-                //     ],
-                //   ),
-                // )
+                SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Row(
+                    children: _categories.map((cat) {
+                      final isSelected = _selectedCategory == cat;
+                      return Padding(
+                        padding: const EdgeInsets.only(right: 8.0),
+                        child: GestureDetector(
+                          onTap: () => _filterMerchantsByCategory(cat),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                            decoration: BoxDecoration(
+                              color: isSelected ? const Color(0xFFAEEA00) : Colors.white,
+                              borderRadius: BorderRadius.circular(20),
+                              boxShadow: [
+                                BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 4, offset: const Offset(0, 2))
+                              ],
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                if (cat != "Semua") ...[
+                                  Icon(
+                                    cat.toLowerCase().contains("kuliner") || cat.toLowerCase().contains("makanan") ? Icons.restaurant : Icons.category,
+                                    size: 14,
+                                    color: isSelected ? const Color(0xFF003D33) : Colors.grey[600],
+                                  ),
+                                  const SizedBox(width: 6),
+                                ],
+                                Text(
+                                  cat,
+                                  style: TextStyle(
+                                    color: isSelected ? const Color(0xFF003D33) : Colors.grey[700],
+                                    fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                                    fontSize: 12,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                )
               ],
             ),
           ),
@@ -340,7 +426,23 @@ class _CustomerDashboardPageState extends State<CustomerDashboardPage> {
   //   );
   // }
 
-  Widget _buildRecommendedRouteCard() {
+  Widget _buildRecommendedRouteSlider() {
+    return SizedBox(
+      height: 135, // Ditambah agar tidak overflow
+      child: PageView.builder(
+        controller: _pageController,
+        itemCount: _routes.length,
+        itemBuilder: (context, index) {
+          return Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 6.0),
+            child: _buildRouteCard(_routes[index]),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildRouteCard(ThematicRouteModel route) {
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
@@ -352,9 +454,9 @@ class _CustomerDashboardPageState extends State<CustomerDashboardPage> {
         children: [
           ClipRRect(
             borderRadius: BorderRadius.circular(12),
-            child: _recommendedRoute!.imageUrl != null && _recommendedRoute!.imageUrl!.isNotEmpty
+            child: route.imageUrl != null && route.imageUrl!.isNotEmpty
                 ? Image.network(
-                    _recommendedRoute!.imageUrl!,
+                    route.imageUrl!,
                     width: 100,
                     height: 80,
                     fit: BoxFit.cover,
@@ -374,14 +476,17 @@ class _CustomerDashboardPageState extends State<CustomerDashboardPage> {
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Text(
-                  _recommendedRoute!.judulRute,
+                  route.judulRute,
                   style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  _recommendedRoute!.deskripsi,
+                  route.deskripsi,
                   style: TextStyle(color: Colors.grey[600], fontSize: 12),
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
@@ -394,11 +499,22 @@ class _CustomerDashboardPageState extends State<CustomerDashboardPage> {
                       children: [
                         const Icon(Icons.route, size: 14, color: Colors.grey),
                         const SizedBox(width: 4),
-                        Text("${_recommendedRoute!.panjangRute ?? 0} km", style: const TextStyle(fontSize: 12)),
+                        Text("${route.panjangRute ?? 0} km", style: const TextStyle(fontSize: 12)),
                       ],
                     ),
                     ElevatedButton(
-                      onPressed: () {},
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => CustomerRoutePreviewPage(
+                              thematicRouteId: int.parse(route.id),
+                              judulRute: route.judulRute,
+                              deskripsiRute: route.deskripsi,
+                            ),
+                          ),
+                        );
+                      },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFFAEEA00),
                         foregroundColor: const Color(0xFF003D33),
@@ -412,6 +528,110 @@ class _CustomerDashboardPageState extends State<CustomerDashboardPage> {
               ],
             ),
           )
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSelectedMerchantCard() {
+    return Container(
+      width: double.infinity,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 10)],
+      ),
+      padding: const EdgeInsets.all(12),
+      child: Stack(
+        children: [
+          Row(
+            children: [
+              ClipRRect(
+                borderRadius: BorderRadius.circular(12),
+                child: _selectedMerchant!.imageUrl != null && _selectedMerchant!.imageUrl!.isNotEmpty
+                    ? Image.network(
+                        _selectedMerchant!.imageUrl!,
+                        width: 100,
+                        height: 80,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) => Container(
+                          width: 100, height: 80, color: Colors.grey[300],
+                          child: const Icon(Icons.store, color: Colors.grey),
+                        ),
+                      )
+                    : Container(
+                        width: 100,
+                        height: 80,
+                        color: Colors.grey[300],
+                        child: const Icon(Icons.store, color: Colors.grey),
+                      ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      _selectedMerchant!.namaBisnis,
+                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      _selectedMerchant!.deskripsi ?? "Merchant Litera",
+                      style: TextStyle(color: Colors.grey[600], fontSize: 12),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 8),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Row(
+                          children: [
+                            const Icon(Icons.storefront, size: 14, color: Colors.grey),
+                            const SizedBox(width: 4),
+                            Text(_selectedMerchant!.status, style: const TextStyle(fontSize: 12)),
+                          ],
+                        ),
+                        ElevatedButton(
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => CustomerMerchantDetailPage(merchant: _selectedMerchant!),
+                              ),
+                            );
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFFAEEA00),
+                            foregroundColor: const Color(0xFF003D33),
+                            padding: const EdgeInsets.symmetric(horizontal: 16),
+                            minimumSize: const Size(0, 30),
+                          ),
+                          child: const Text("Lihat", style: TextStyle(fontWeight: FontWeight.bold)),
+                        )
+                      ],
+                    )
+                  ],
+                ),
+              )
+            ],
+          ),
+          Positioned(
+            top: -10,
+            right: -10,
+            child: IconButton(
+              icon: const Icon(Icons.close, size: 20, color: Colors.grey),
+              onPressed: () {
+                setState(() {
+                  _selectedMerchant = null;
+                });
+              },
+            ),
+          ),
         ],
       ),
     );

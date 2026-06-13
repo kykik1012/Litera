@@ -429,9 +429,9 @@ class _CustomerJelajahPageState extends State<CustomerJelajahPage> {
                     topLeft: Radius.circular(16),
                     bottomLeft: Radius.circular(16),
                   ),
-                  child: merchant.profilePicture != null && merchant.profilePicture!.isNotEmpty
+                  child: merchant.imageUrl != null && merchant.imageUrl!.isNotEmpty
                       ? Image.network(
-                          merchant.profilePicture!,
+                          merchant.imageUrl!,
                           height: 110,
                           width: 110,
                           fit: BoxFit.cover,

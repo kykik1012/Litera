@@ -46,7 +46,14 @@ class _EditProfilePageState extends State<EditProfilePage> {
     if (response["success"] == true) {
       final data = response["data"];
       profilePicture = data["profile_picture"];
-      nameController.text = data["name"] ?? "";
+
+      if (role == 2) {
+        nameController.text = data["name"] ?? "";
+      } else {
+        namaBisnisController.text = data["nama_bisnis"] ?? "";
+        deskripsiController.text = data["deskripsi"] ?? "";
+        tahunController.text = data["usaha_didirikan"]?.toString() ?? "";
+      }
     }
 
     setState(() {
@@ -84,11 +91,21 @@ class _EditProfilePageState extends State<EditProfilePage> {
         );
       }
 
-      // Karena ini khusus Customer, kita langsung panggil updateCustomer
-      final response = await userService.updateCustomer(
-        id: userId,
-        name: nameController.text,
-      );
+      Map<String, dynamic> response;
+
+      if (role == 2) {
+        response = await userService.updateCustomer(
+          id: userId,
+          name: nameController.text,
+        );
+      } else {
+        response = await userService.updateMerchant(
+          id: userId,
+          namaBisnis: namaBisnisController.text,
+          deskripsi: deskripsiController.text,
+          usahaDidirikan: tahunController.text,
+        );
+      }
 
       if (!mounted) return;
 

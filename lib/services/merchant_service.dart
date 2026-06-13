@@ -1,8 +1,9 @@
 import 'dart:convert';
+import 'dart:typed_data';
 import 'package:http/http.dart' as http;
 import '../constants/api.dart';
 import '../helpers/api_helper.dart';
-import 'dart:io';
+import '../helpers/shared_pref_helper.dart';
 
 class MerchantService {
   // Mengambil semua data merchant
@@ -43,43 +44,41 @@ class MerchantService {
     return jsonDecode(response.body);
   }
 
-  // --- UPDATE INFORMASI MERCHANT (MULTIPART) ---
+  // --- UPDATE INFORMASI MERCHANT ---
   Future<Map<String, dynamic>> updateMerchantInformation({
-    required String id,
+    required int id,
     required String namaBisnis,
-    required String usahaDidirikan, // Format: YYYY-MM-DD
-    required String jamBuka,        // Format: HH:mm
-    required String jamTutup,       // Format: HH:mm
+    required String usahaDidirikan,
+    required String jamBuka,
+    required String jamTutup,
     required String deskripsi,
-    File? imageProfile,             // Untuk parameter image_url
-    File? imageQr,                  // Untuk parameter image_qr
+    Uint8List? imageBytes,
+    String? imageFileName,
   }) async {
-    final headers = await ApiHelper.authHeaders();
-    
-    // Hapus header JSON karena kita pakai Multipart
-    headers.remove('Content-Type');
-    headers.remove('content-type');
-
-    // Trik standar: Gunakan POST lalu tambahkan _method = PUT agar server (terutama Laravel) bisa membaca file multipart dengan benar
+    final token = await SharedPrefHelper.getToken();
     final request = http.MultipartRequest(
-      "POST", 
+      "PUT",
       Uri.parse("${Api.baseUrl}/merchants/$id/information"),
     );
 
-    request.headers.addAll(headers);
-    request.fields['_method'] = 'PUT'; // Wajib ada untuk mode PUT Multipart
-    request.fields['nama_bisnis'] = namaBisnis;
-    request.fields['usaha_didirikan'] = usahaDidirikan;
-    request.fields['jam_buka'] = jamBuka;
-    request.fields['jam_tutup'] = jamTutup;
-    request.fields['deskripsi'] = deskripsi;
+    request.headers.addAll({
+      "Authorization": "Bearer $token",
+    });
 
-    // Masukkan file jika user memilih gambar baru
-    if (imageProfile != null) {
-      request.files.add(await http.MultipartFile.fromPath('image_url', imageProfile.path));
-    }
-    if (imageQr != null) {
-      request.files.add(await http.MultipartFile.fromPath('image_qr', imageQr.path));
+    request.fields["nama_bisnis"] = namaBisnis;
+    request.fields["usaha_didirikan"] = usahaDidirikan;
+    request.fields["jam_buka"] = jamBuka;
+    request.fields["jam_tutup"] = jamTutup;
+    request.fields["deskripsi"] = deskripsi;
+
+    if (imageBytes != null && imageFileName != null) {
+      request.files.add(
+        http.MultipartFile.fromBytes(
+          "image_url",
+          imageBytes,
+          filename: imageFileName,
+        ),
+      );
     }
 
     final response = await request.send();
