@@ -44,18 +44,20 @@ class MerchantService {
     return jsonDecode(response.body);
   }
 
-  // --- UPDATE INFORMASI MERCHANT ---
+  // --- DIPERBARUI: UPDATE INFORMASI BISNIS MERCHANT ---
+  // (Menggunakan Endpoint dari Gambar Swagger)
   Future<Map<String, dynamic>> updateMerchantInformation({
     required int id,
-    required String namaBisnis,
-    required String usahaDidirikan,
-    required String jamBuka,
-    required String jamTutup,
-    required String deskripsi,
+    String? namaBisnis,
+    String? usahaDidirikan,
+    String? jamBuka,
+    String? jamTutup,
+    String? deskripsi,
+    double? latitude,
+    double? longitude,
+    String? alamat,
     Uint8List? imageBytes,
     String? imageFileName,
-    Uint8List? qrBytes,
-    String? qrFileName,
   }) async {
     final token = await SharedPrefHelper.getToken();
     final request = http.MultipartRequest(
@@ -67,28 +69,23 @@ class MerchantService {
       "Authorization": "Bearer $token",
     });
 
-    request.fields["nama_bisnis"] = namaBisnis;
-    request.fields["usaha_didirikan"] = usahaDidirikan;
-    request.fields["jam_buka"] = jamBuka;
-    request.fields["jam_tutup"] = jamTutup;
-    request.fields["deskripsi"] = deskripsi;
+    // Menambahkan field teks hanya jika tidak null/kosong
+    if (namaBisnis != null) request.fields["nama_bisnis"] = namaBisnis;
+    if (usahaDidirikan != null) request.fields["usaha_didirikan"] = usahaDidirikan;
+    if (jamBuka != null) request.fields["jam_buka"] = jamBuka;
+    if (jamTutup != null) request.fields["jam_tutup"] = jamTutup;
+    if (deskripsi != null) request.fields["deskripsi"] = deskripsi;
+    if (alamat != null) request.fields["alamat"] = alamat;
+    if (latitude != null) request.fields["latitude"] = latitude.toString();
+    if (longitude != null) request.fields["longitude"] = longitude.toString();
 
+    // Menambahkan Foto Utama Merchant
     if (imageBytes != null && imageFileName != null) {
       request.files.add(
         http.MultipartFile.fromBytes(
-          "image_url",
+          "image_url", // Sesuai dengan field di Swagger
           imageBytes,
           filename: imageFileName,
-        ),
-      );
-    }
-
-    if (qrBytes != null && qrFileName != null) {
-      request.files.add(
-        http.MultipartFile.fromBytes(
-          "image_qr",
-          qrBytes,
-          filename: qrFileName,
         ),
       );
     }
@@ -98,65 +95,31 @@ class MerchantService {
     return jsonDecode(body);
   }
 
-  // --- UPDATE LOKASI MERCHANT ---
+  // --- DIPERBARUI: UPDATE LOKASI MERCHANT ---
+  // Karena temanmu menggabungkannya di endpoint '/information',
+  // fungsi ini sekarang cukup memanggil updateMerchantInformation 
+  // dengan hanya mengirimkan koordinat latitude dan longitude.
   Future<Map<String, dynamic>> updateMerchantLocation({
     required int id,
     required double latitude,
     required double longitude,
   }) async {
-    final headers = await ApiHelper.authHeaders();
-    headers['Content-Type'] = 'application/json';
-
-    String alamat = "-";
-    bool isActive = true;
     
-    // Coba ambil data lokasi yang sudah ada untuk mempertahankan alamat & is_active
+    // Ambil data alamat lama terlebih dahulu agar tidak hilang (opsional, sebagai jaga-jaga)
+    String? oldAlamat;
     try {
-      final getResponse = await http.get(
-        Uri.parse("${Api.baseUrl}/merchant-locations/$id"),
-        headers: headers,
-      );
-      if (getResponse.statusCode == 200) {
-        final data = jsonDecode(getResponse.body);
-        if (data['success'] == true && data['data'] != null) {
-          alamat = data['data']['alamat'] ?? "-";
-          isActive = data['data']['is_active'] ?? true;
-        }
+      final oldData = await getMerchantById(id);
+      if (oldData['success'] == true && oldData['data'] != null) {
+        oldAlamat = oldData['data']['alamat'];
       }
-    } catch (e) {
-      // Abaikan error saat GET
-    }
+    } catch (_) {}
 
-    // Lakukan PUT untuk update lokasi (menggunakan endpoint yang benar)
-    var response = await http.put(
-      Uri.parse("${Api.baseUrl}/merchant-locations/$id"),
-      headers: headers,
-      body: jsonEncode({
-        "latitude": latitude,
-        "longitude": longitude,
-        "alamat": alamat,
-        "is_active": isActive,
-      }),
+    // Lakukan update lokasi ke endpoint utama /information
+    return await updateMerchantInformation(
+      id: id,
+      latitude: latitude,
+      longitude: longitude,
+      alamat: oldAlamat ?? "-", // Set default "-" jika kosong
     );
-
-    var responseData = jsonDecode(response.body);
-
-    // Jika lokasi tidak ditemukan (baru pertama kali set), lakukan POST untuk create
-    if (response.statusCode == 404 || 
-       (responseData['success'] == false && responseData['message']?.toString().toLowerCase().contains('tidak ditemukan') == true)) {
-      response = await http.post(
-        Uri.parse("${Api.baseUrl}/merchant-locations"),
-        headers: headers,
-        body: jsonEncode({
-          "merchant_id": id,
-          "latitude": latitude,
-          "longitude": longitude,
-          "alamat": alamat,
-        }),
-      );
-      responseData = jsonDecode(response.body);
-    }
-
-    return responseData;
   }
 }

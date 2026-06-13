@@ -8,7 +8,7 @@ import '../../helpers/shared_pref_helper.dart';
 import '../../services/merchant_service.dart';
 
 class MerchantUpdateLocationPage extends StatefulWidget {
-  final LatLng? initialLocation;
+  final LatLng? initialLocation; // Tetap ada, tapi kita prioritaskan data dari API
 
   const MerchantUpdateLocationPage({super.key, this.initialLocation});
 
@@ -20,7 +20,7 @@ class _MerchantUpdateLocationPageState extends State<MerchantUpdateLocationPage>
   final MapController _mapController = MapController();
   final MerchantService _merchantService = MerchantService();
 
-  LatLng? _currentCenter;
+  LatLng? _currentCenter; // Awalnya dibiarkan null
   bool _isLoading = false;
   bool _isGettingLocation = false;
 
@@ -30,11 +30,55 @@ class _MerchantUpdateLocationPageState extends State<MerchantUpdateLocationPage>
   @override
   void initState() {
     super.initState();
-    if (widget.initialLocation != null) {
-      _currentCenter = widget.initialLocation;
-    } else {
-      _currentCenter = const LatLng(-7.797068, 110.370529); // Default Jogja
-      _getCurrentLocation();
+    // Tarik data asli dari database terlebih dahulu saat halaman dibuka
+    _fetchSavedLocation(); 
+  }
+
+  // --- FUNGSI BARU: TARIK LOKASI DARI DATABASE ---
+  Future<void> _fetchSavedLocation() async {
+    setState(() => _isLoading = true);
+    try {
+      final userId = await SharedPrefHelper.getUserId() ?? 0;
+      final merchantRes = await _merchantService.getAllMerchants();
+
+      if (merchantRes['success'] == true) {
+        final List<dynamic> mList = merchantRes['data'];
+        final myMerchant = mList.firstWhere(
+          (m) => m['user_id'].toString() == userId.toString(),
+          orElse: () => null,
+        );
+
+        // Jika data merchant dan lokasinya ada di database
+        if (myMerchant != null && myMerchant['latitude'] != null && myMerchant['longitude'] != null) {
+          double lat = double.tryParse(myMerchant['latitude'].toString()) ?? 0.0;
+          double lng = double.tryParse(myMerchant['longitude'].toString()) ?? 0.0;
+
+          if (lat != 0.0 && lng != 0.0) {
+            setState(() {
+              _currentCenter = LatLng(lat, lng);
+            });
+            // Hentikan fungsi karena kita sudah dapat titik dari database
+            return; 
+          }
+        }
+      }
+
+      // Jika di database masih kosong, fallback ke parameter awal atau GPS HP
+      if (widget.initialLocation != null) {
+        setState(() => _currentCenter = widget.initialLocation);
+      } else {
+        await _getCurrentLocation();
+      }
+
+    } catch (e) {
+      debugPrint("Error memuat lokasi dari database: $e");
+      if (widget.initialLocation != null) {
+        setState(() => _currentCenter = widget.initialLocation);
+      } else {
+        await _getCurrentLocation();
+      }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
@@ -44,9 +88,9 @@ class _MerchantUpdateLocationPageState extends State<MerchantUpdateLocationPage>
       bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
       if (!serviceEnabled) {
         if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Layanan lokasi dinonaktifkan.')),
-        );
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Layanan lokasi dinonaktifkan.')));
+        // Set default Jogja jika gagal
+        setState(() => _currentCenter ??= const LatLng(-7.797068, 110.370529)); 
         return;
       }
 
@@ -55,32 +99,29 @@ class _MerchantUpdateLocationPageState extends State<MerchantUpdateLocationPage>
         permission = await Geolocator.requestPermission();
         if (permission == LocationPermission.denied) {
           if (!mounted) return;
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Izin lokasi ditolak.')),
-          );
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Izin lokasi ditolak.')));
+          setState(() => _currentCenter ??= const LatLng(-7.797068, 110.370529));
           return;
         }
       }
 
       if (permission == LocationPermission.deniedForever) {
         if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Izin lokasi ditolak permanen.')),
-        );
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Izin lokasi ditolak permanen.')));
+        setState(() => _currentCenter ??= const LatLng(-7.797068, 110.370529));
         return;
       }
 
-      Position position = await Geolocator.getCurrentPosition(
-        desiredAccuracy: LocationAccuracy.high,
-      );
-
+      Position position = await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
       final newLoc = LatLng(position.latitude, position.longitude);
+      
       setState(() {
         _currentCenter = newLoc;
       });
       _mapController.move(newLoc, 15.0);
     } catch (e) {
       debugPrint("Error getting location: $e");
+      setState(() => _currentCenter ??= const LatLng(-7.797068, 110.370529));
     } finally {
       if (mounted) setState(() => _isGettingLocation = false);
     }
@@ -94,7 +135,6 @@ class _MerchantUpdateLocationPageState extends State<MerchantUpdateLocationPage>
       final userId = await SharedPrefHelper.getUserId() ?? 0;
       int merchantId = 0;
       
-      // Get the correct merchant ID for this user
       final merchantRes = await _merchantService.getAllMerchants();
       if (merchantRes['success'] == true) {
         final List<dynamic> mList = merchantRes['data'];
@@ -121,7 +161,7 @@ class _MerchantUpdateLocationPageState extends State<MerchantUpdateLocationPage>
 
       if (response['success'] == true || response['status'] == 'success' || response['message']?.toString().toLowerCase().contains('berhasil') == true) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Lokasi berhasil diperbarui!')),
+          const SnackBar(content: Text('Lokasi berhasil diperbarui!', style: TextStyle(color: Colors.white)), backgroundColor: Colors.green),
         );
         Navigator.pop(context, true);
       } else {
@@ -167,138 +207,139 @@ class _MerchantUpdateLocationPageState extends State<MerchantUpdateLocationPage>
           ),
         ],
       ),
-      body: Stack(
-        children: [
-          FlutterMap(
-            mapController: _mapController,
-            options: MapOptions(
-              initialCenter: _currentCenter!,
-              initialZoom: 15.0,
-              onPositionChanged: (position, hasGesture) {
-                if (hasGesture && position.center != null) {
-                  setState(() {
-                    _currentCenter = position.center;
-                  });
-                }
-              },
-            ),
-            children: [
-              TileLayer(
-                urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                userAgentPackageName: 'com.litera.news.app',
-              ),
-            ],
-          ),
-          
-          // Center Marker Pin
-          Center(
-            child: Padding(
-              padding: const EdgeInsets.only(bottom: 40.0), // Adjust to make the pin point to the center
-              child: Icon(
-                Icons.location_on,
-                size: 50,
-                color: Colors.red[600],
-              ),
-            ),
-          ),
-
-          if (_isGettingLocation)
-            const Center(
-              child: CircularProgressIndicator(color: tealDark),
-            ),
-
-          // Bottom Sheet / Action Card
-          Positioned(
-            left: 20,
-            right: 20,
-            bottom: 30,
-            child: Container(
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(16),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.1),
-                    blurRadius: 15,
-                    offset: const Offset(0, 5),
+      // --- CEK JIKA LOKASI BELUM DIDAPATKAN, TAMPILKAN LOADING ---
+      body: _currentCenter == null
+          ? const Center(child: CircularProgressIndicator(color: tealDark))
+          : Stack(
+              children: [
+                FlutterMap(
+                  mapController: _mapController,
+                  options: MapOptions(
+                    initialCenter: _currentCenter!,
+                    initialZoom: 15.0,
+                    onPositionChanged: (position, hasGesture) {
+                      if (hasGesture && position.center != null) {
+                        setState(() {
+                          _currentCenter = position.center;
+                        });
+                      }
+                    },
                   ),
-                ],
-              ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(10),
-                        decoration: BoxDecoration(
-                          color: Colors.blue[50],
-                          shape: BoxShape.circle,
+                  children: [
+                    TileLayer(
+                      urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                      userAgentPackageName: 'com.litera.news.app',
+                    ),
+                  ],
+                ),
+                
+                // Center Marker Pin
+                Center(
+                  child: Padding(
+                    padding: const EdgeInsets.only(bottom: 40.0),
+                    child: Icon(
+                      Icons.location_on,
+                      size: 50,
+                      color: Colors.red[600],
+                    ),
+                  ),
+                ),
+
+                if (_isGettingLocation || _isLoading)
+                  const Center(
+                    child: CircularProgressIndicator(color: tealDark),
+                  ),
+
+                // Bottom Sheet / Action Card
+                Positioned(
+                  left: 20,
+                  right: 20,
+                  bottom: 30,
+                  child: Container(
+                    padding: const EdgeInsets.all(20),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(16),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.1),
+                          blurRadius: 15,
+                          offset: const Offset(0, 5),
                         ),
-                        child: Icon(Icons.location_on, color: Colors.blue[600], size: 24),
-                      ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+                      ],
+                    ),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Row(
                           children: [
-                            Text(
-                              'Koordinat Baru',
-                              style: GoogleFonts.poppins(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w600,
-                                color: const Color(0xFF1A1A2E),
+                            Container(
+                              padding: const EdgeInsets.all(10),
+                              decoration: BoxDecoration(
+                                color: Colors.blue[50],
+                                shape: BoxShape.circle,
                               ),
+                              child: Icon(Icons.location_on, color: Colors.blue[600], size: 24),
                             ),
-                            Text(
-                              _currentCenter != null 
-                                  ? '${_currentCenter!.latitude.toStringAsFixed(5)}, ${_currentCenter!.longitude.toStringAsFixed(5)}'
-                                  : 'Memuat...',
-                              style: GoogleFonts.poppins(
-                                fontSize: 12,
-                                color: Colors.grey[600],
+                            const SizedBox(width: 16),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Koordinat Baru',
+                                    style: GoogleFonts.poppins(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w600,
+                                      color: const Color(0xFF1A1A2E),
+                                    ),
+                                  ),
+                                  Text(
+                                    '${_currentCenter!.latitude.toStringAsFixed(5)}, ${_currentCenter!.longitude.toStringAsFixed(5)}',
+                                    style: GoogleFonts.poppins(
+                                      fontSize: 12,
+                                      color: Colors.grey[600],
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
                           ],
                         ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 20),
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: _isLoading ? null : _saveLocation,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: tealDark,
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                      child: _isLoading
-                          ? const SizedBox(
-                              width: 20,
-                              height: 20,
-                              child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
-                            )
-                          : Text(
-                              'Simpan Lokasi',
-                              style: GoogleFonts.poppins(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w600,
-                                color: limeGreen,
+                        const SizedBox(height: 20),
+                        SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton(
+                            onPressed: _isLoading ? null : _saveLocation,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: tealDark,
+                              padding: const EdgeInsets.symmetric(vertical: 14),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
                               ),
                             ),
+                            child: _isLoading
+                                ? const SizedBox(
+                                    width: 20,
+                                    height: 20,
+                                    child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                                  )
+                                : Text(
+                                    'Simpan Lokasi',
+                                    style: GoogleFonts.poppins(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w600,
+                                      color: limeGreen,
+                                    ),
+                                  ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
-          ),
-        ],
-      ),
     );
   }
 }

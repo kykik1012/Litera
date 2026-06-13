@@ -3,6 +3,7 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:intl/intl.dart';
 
 import '../../models/merchant.dart';
 import '../../services/merchant_service.dart';
@@ -39,8 +40,6 @@ class _MerchantEditProfilUsahaPageState extends State<MerchantEditProfilUsahaPag
   XFile? _profileImage;
   File? _profileFile;
   Uint8List? _profileBytes;
-  XFile? _qrImage;
-  Uint8List? _qrBytes;
 
   // Controllers
   final TextEditingController _namaController = TextEditingController();
@@ -223,21 +222,6 @@ class _MerchantEditProfilUsahaPageState extends State<MerchantEditProfilUsahaPag
     }
   }
 
-  Future<void> _pickQrPic() async {
-    try {
-      final picked = await _picker.pickImage(source: ImageSource.gallery, imageQuality: 80);
-      if (picked != null) {
-        final bytes = await picked.readAsBytes();
-        setState(() {
-          _qrImage = picked;
-          _qrBytes = bytes;
-        });
-      }
-    } catch (e) {
-      debugPrint("Error picking QR: $e");
-    }
-  }
-
   Future<void> _savePerubahan() async {
     setState(() => _isSaving = true);
     try {
@@ -267,15 +251,16 @@ class _MerchantEditProfilUsahaPageState extends State<MerchantEditProfilUsahaPag
            
            if (!mounted) return;
            if (res['success'] == true) {
-              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Profil berhasil disimpan')));
+              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Profil berhasil disimpan', style: TextStyle(color: Colors.white)), backgroundColor: Colors.green));
               Navigator.pop(context, true);
            } else {
-              ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(res['message'] ?? 'Gagal menyimpan')));
+              ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(res['message'] ?? 'Gagal menyimpan'), backgroundColor: Colors.red));
            }
          }
          return;
        }
 
+       // --- DIPERBARUI: Disesuaikan dengan API Swagger Baru (Tanpa QRIS) ---
        final res = await _merchantService.updateMerchantInformation(
           id: int.parse(_merchant!.id),
           namaBisnis: _namaController.text,
@@ -285,8 +270,6 @@ class _MerchantEditProfilUsahaPageState extends State<MerchantEditProfilUsahaPag
           deskripsi: _deskripsiController.text,
           imageBytes: _bannerBytes,
           imageFileName: _bannerImage?.name,
-          qrBytes: _qrBytes,
-          qrFileName: _qrImage?.name,
        );
 
        if (_profileBytes != null && userId != null) {
@@ -298,14 +281,14 @@ class _MerchantEditProfilUsahaPageState extends State<MerchantEditProfilUsahaPag
        }
 
        if (!mounted) return;
-       if (res['success'] == true) {
-          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Profil berhasil diperbarui')));
+       if (res['success'] == true || res['message']?.toString().toLowerCase().contains('berhasil') == true) {
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Profil berhasil diperbarui', style: TextStyle(color: Colors.white)), backgroundColor: Colors.green));
           Navigator.pop(context, true);
        } else {
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(res['message'] ?? 'Gagal memperbarui')));
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(res['message'] ?? 'Gagal memperbarui'), backgroundColor: Colors.red));
        }
     } catch (e) {
-       if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
+       if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red));
     } finally {
        if (mounted) setState(() => _isSaving = false);
     }
@@ -313,45 +296,48 @@ class _MerchantEditProfilUsahaPageState extends State<MerchantEditProfilUsahaPag
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: scaffoldBg,
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        centerTitle: true,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new, color: Colors.black, size: 20),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: Text(
-          'Edit Profil Usaha',
-          style: GoogleFonts.poppins(
-            color: Colors.black,
-            fontWeight: FontWeight.bold,
-            fontSize: 16,
+    // --- DIPERBARUI: Membungkus dengan HeroControllerScope.none untuk mematikan error animasi ---
+    return HeroControllerScope.none(
+      child: Scaffold(
+        backgroundColor: scaffoldBg,
+        appBar: AppBar(
+          backgroundColor: Colors.white,
+          elevation: 0,
+          centerTitle: true,
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back_ios_new, color: Colors.black, size: 20),
+            onPressed: () => Navigator.pop(context),
           ),
-        ),
-      ),
-      body: _isLoading 
-        ? const Center(child: CircularProgressIndicator(color: tealDark))
-        : SingleChildScrollView(
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _buildHeaderSection(),
-                  const SizedBox(height: 24),
-                  _buildJadwalOperasional(),
-                  const SizedBox(height: 24),
-                  _buildUsahaDimulaiSejak(),
-                  const SizedBox(height: 24),
-                  _buildKisahUsaha(),
-                  const SizedBox(height: 32),
-                ],
-              ),
+          title: Text(
+            'Edit Profil Usaha',
+            style: GoogleFonts.poppins(
+              color: Colors.black,
+              fontWeight: FontWeight.bold,
+              fontSize: 16,
             ),
           ),
+        ),
+        body: _isLoading 
+          ? const Center(child: CircularProgressIndicator(color: tealDark))
+          : SingleChildScrollView(
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildHeaderSection(),
+                    const SizedBox(height: 24),
+                    _buildJadwalOperasional(),
+                    const SizedBox(height: 24),
+                    _buildUsahaDimulaiSejak(),
+                    const SizedBox(height: 24),
+                    _buildKisahUsaha(),
+                    const SizedBox(height: 32),
+                  ],
+                ),
+              ),
+            ),
+      ),
     );
   }
 
@@ -467,7 +453,7 @@ class _MerchantEditProfilUsahaPageState extends State<MerchantEditProfilUsahaPag
           ),
           const SizedBox(height: 4),
           Text(
-            'Jl. Sudirman Kp. Using, Jemberlor, Kec. Patrang, Kabupaten Jember', // Mock address for now
+            _merchant?.alamat ?? '-', 
             style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey[700]),
           ),
           const SizedBox(height: 12),
@@ -546,6 +532,38 @@ class _MerchantEditProfilUsahaPageState extends State<MerchantEditProfilUsahaPag
     );
   }
 
+  Future<void> _pickTime(bool isBuka) async {
+    final initialTimeStr = isBuka ? _bukaController.text : _tutupController.text;
+    TimeOfDay initialTime = const TimeOfDay(hour: 8, minute: 0);
+    
+    if (initialTimeStr.contains(':')) {
+      final parts = initialTimeStr.split(':');
+      if (parts.length >= 2) {
+        initialTime = TimeOfDay(hour: int.tryParse(parts[0]) ?? 8, minute: int.tryParse(parts[1]) ?? 0);
+      }
+    }
+
+    final picked = await showTimePicker(
+      context: context,
+      initialTime: initialTime,
+      builder: (context, child) => Theme(
+        data: ThemeData.light().copyWith(colorScheme: const ColorScheme.light(primary: tealDark)),
+        child: child!,
+      ),
+    );
+    
+    if (picked != null) {
+      setState(() {
+        final formattedTime = '${picked.hour.toString().padLeft(2, '0')}:${picked.minute.toString().padLeft(2, '0')}';
+        if (isBuka) {
+          _bukaController.text = formattedTime;
+        } else {
+          _tutupController.text = formattedTime;
+        }
+      });
+    }
+  }
+
   Widget _buildJadwalOperasional() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -570,7 +588,10 @@ class _MerchantEditProfilUsahaPageState extends State<MerchantEditProfilUsahaPag
                       children: [
                         Text('Buka', style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w600)),
                         const SizedBox(height: 4),
-                        _buildTimeField(_bukaController),
+                        GestureDetector(
+                          onTap: () => _pickTime(true),
+                          child: _buildTimeField(_bukaController),
+                        ),
                       ],
                     ),
                   ),
@@ -581,7 +602,10 @@ class _MerchantEditProfilUsahaPageState extends State<MerchantEditProfilUsahaPag
                       children: [
                         Text('Tutup', style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w600)),
                         const SizedBox(height: 4),
-                        _buildTimeField(_tutupController),
+                        GestureDetector(
+                          onTap: () => _pickTime(false),
+                          child: _buildTimeField(_tutupController),
+                        ),
                       ],
                     ),
                   ),
@@ -602,8 +626,9 @@ class _MerchantEditProfilUsahaPageState extends State<MerchantEditProfilUsahaPag
       ),
       child: TextField(
         controller: controller,
+        enabled: false, // Dimatikan agar diedit lewat showTimePicker
         textAlign: TextAlign.center,
-        style: GoogleFonts.poppins(fontWeight: FontWeight.bold),
+        style: GoogleFonts.poppins(fontWeight: FontWeight.bold, color: Colors.black),
         decoration: const InputDecoration(
           border: InputBorder.none,
           contentPadding: EdgeInsets.symmetric(vertical: 12),
@@ -661,6 +686,7 @@ class _MerchantEditProfilUsahaPageState extends State<MerchantEditProfilUsahaPag
           ),
           child: TextField(
             controller: controller,
+            keyboardType: TextInputType.number,
             textAlign: TextAlign.center,
             style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.bold),
             decoration: const InputDecoration(
@@ -673,6 +699,7 @@ class _MerchantEditProfilUsahaPageState extends State<MerchantEditProfilUsahaPag
     );
   }
 
+  // --- DIPERBARUI: Bagian QRIS sudah dihapus karena API tidak menerimanya lagi ---
   Widget _buildKisahUsaha() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -697,43 +724,10 @@ class _MerchantEditProfilUsahaPageState extends State<MerchantEditProfilUsahaPag
             ),
           ),
         ),
-        const SizedBox(height: 24),
-        Text('Image QR / Gambar QRIS', style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.bold)),
-        const SizedBox(height: 12),
-        GestureDetector(
-          onTap: _pickQrPic,
-          child: Container(
-            width: double.infinity,
-            height: 160,
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: Colors.grey[300]!),
-            ),
-            child: _qrBytes != null
-                ? ClipRRect(
-                    borderRadius: BorderRadius.circular(12),
-                    child: Image.memory(_qrBytes!, fit: BoxFit.contain),
-                  )
-                : (_merchant?.imageQr != null && _merchant!.imageQr!.isNotEmpty)
-                    ? ClipRRect(
-                        borderRadius: BorderRadius.circular(12),
-                        child: Image.network(_merchant!.imageQr!, fit: BoxFit.contain),
-                      )
-                    : Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(Icons.qr_code_scanner, size: 40, color: Colors.grey[400]),
-                          const SizedBox(height: 8),
-                          Text(
-                            "Ketuk untuk unggah QRIS",
-                            style: GoogleFonts.poppins(color: Colors.grey[500], fontSize: 12),
-                          ),
-                        ],
-                      ),
-          ),
-        ),
-        const SizedBox(height: 24),
+        
+        const SizedBox(height: 32),
+        
+        // Tombol Simpan
         SizedBox(
           width: double.infinity,
           child: ElevatedButton(

@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
@@ -24,6 +25,7 @@ class _CustomerSingleRoutePageState extends State<CustomerSingleRoutePage> {
   
   bool _isLoadingMap = true;
   String _statusMessage = "Mencari lokasimu...";
+  StreamSubscription<Position>? _positionStreamSubscription;
 
   @override
   void initState() {
@@ -35,6 +37,12 @@ class _CustomerSingleRoutePageState extends State<CustomerSingleRoutePage> {
     
     // 2. Mulai proses pelacakan lokasi dan pembuatan rute
     _initRoute();
+  }
+
+  @override
+  void dispose() {
+    _positionStreamSubscription?.cancel();
+    super.dispose();
   }
 
   Future<void> _initRoute() async {
@@ -76,6 +84,19 @@ class _CustomerSingleRoutePageState extends State<CustomerSingleRoutePage> {
     );
 
     _currentLocation = LatLng(position.latitude, position.longitude);
+
+    _positionStreamSubscription ??= Geolocator.getPositionStream(
+      locationSettings: const LocationSettings(
+        accuracy: LocationAccuracy.high,
+        distanceFilter: 5,
+      ),
+    ).listen((Position newPosition) {
+      if (mounted) {
+        setState(() {
+          _currentLocation = LatLng(newPosition.latitude, newPosition.longitude);
+        });
+      }
+    });
   }
 
   // --- FUNGSI MENGAMBIL GARIS RUTE DARI OSRM API ---

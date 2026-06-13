@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
@@ -42,6 +43,7 @@ class _CustomerDashboardPageState extends State<CustomerDashboardPage> {
   List<ThematicRouteModel> _routes = [];
   final PageController _pageController = PageController(viewportFraction: 0.95);
   bool _isLoading = true;
+  StreamSubscription<Position>? _positionStreamSubscription;
 
   @override
   void initState() {
@@ -53,6 +55,7 @@ class _CustomerDashboardPageState extends State<CustomerDashboardPage> {
   void dispose() {
     _searchController.dispose();
     _pageController.dispose();
+    _positionStreamSubscription?.cancel();
     super.dispose();
   }
 
@@ -121,6 +124,19 @@ class _CustomerDashboardPageState extends State<CustomerDashboardPage> {
 
     Position position = await Geolocator.getCurrentPosition();
     _currentLocation = LatLng(position.latitude, position.longitude);
+
+    _positionStreamSubscription = Geolocator.getPositionStream(
+      locationSettings: const LocationSettings(
+        accuracy: LocationAccuracy.high,
+        distanceFilter: 5,
+      ),
+    ).listen((Position newPosition) {
+      if (mounted) {
+        setState(() {
+          _currentLocation = LatLng(newPosition.latitude, newPosition.longitude);
+        });
+      }
+    });
   }
 
   void _recenterMap() {
@@ -463,7 +479,7 @@ class _CustomerDashboardPageState extends State<CustomerDashboardPage> {
 
   Widget _buildRecommendedRouteSlider() {
     return SizedBox(
-      height: 135, // Ditambah agar tidak overflow
+      height: 160, // Diperbesar dari 135 menjadi 160 agar tidak overflow
       child: PageView.builder(
         controller: _pageController,
         itemCount: _routes.length,

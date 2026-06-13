@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
@@ -31,11 +32,18 @@ class _MapNavigationPageState extends State<MapNavigationPage> {
   List<RouteDetailModel> routeLocations = [];
 
   final RouteDetailService _routeDetailService = RouteDetailService();
+  StreamSubscription<Position>? _positionStreamSubscription;
 
   @override
   void initState() {
     super.initState();
     _fetchDataAndInitNavigation();
+  }
+
+  @override
+  void dispose() {
+    _positionStreamSubscription?.cancel();
+    super.dispose();
   }
 
   // Fungsi gabungan untuk Fetch API lalu Init GPS
@@ -72,6 +80,19 @@ class _MapNavigationPageState extends State<MapNavigationPage> {
 
       setState(() {
         userLocation = LatLng(position.latitude, position.longitude);
+      });
+
+      _positionStreamSubscription = Geolocator.getPositionStream(
+        locationSettings: const LocationSettings(
+          accuracy: LocationAccuracy.high,
+          distanceFilter: 5,
+        ),
+      ).listen((Position newPosition) {
+        if (mounted) {
+          setState(() {
+            userLocation = LatLng(newPosition.latitude, newPosition.longitude);
+          });
+        }
       });
 
       // 3. Hitung Jarak dan Urutkan

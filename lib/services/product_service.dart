@@ -8,7 +8,6 @@ import '../helpers/api_helper.dart';
 import '../helpers/shared_pref_helper.dart';
 
 class ProductService {
-
   // Mengambil semua produk
   Future<Map<String, dynamic>> getAllProducts() async {
     final headers = await ApiHelper.authHeaders();
@@ -88,23 +87,45 @@ class ProductService {
     return jsonDecode(body);
   }
 
-  // Mengubah status ketersediaan produk (Tersedia / Habis)
-  Future<Map<String, dynamic>> updateProductAvailability(String id, bool isAvailable) async {
-    final headers = await ApiHelper.authHeaders();
-    headers['Content-Type'] = 'application/json';
+  // --- DIPERBARUI: Mengubah status ketersediaan produk (Tersedia / Habis) ---
+  // Menggunakan PUT /api/products/{id} (Multipart/form-data)
+  Future<Map<String, dynamic>> updateProductAvailability({
+    required String id,
+    required String namaProduk,
+    required String deskripsi,
+    required int hargaProduk,
+    required int categoryId,
+    required bool isAvailable,
+  }) async {
+    final token = await SharedPrefHelper.getToken();
 
-    final response = await http.put(
-      Uri.parse("${Api.baseUrl}/products/$id/status"),
-      headers: headers,
-      body: jsonEncode({
-        "is_available": isAvailable,
-      }),
+    final request = http.MultipartRequest(
+      "PUT",
+      Uri.parse("${Api.baseUrl}/products/$id"),
     );
 
-    return jsonDecode(response.body);
+    request.headers.addAll({
+      "Authorization": "Bearer $token",
+    });
+
+    // Kirim data yang sama persis dengan yang lama, hanya is_available yang berubah
+    request.fields['nama_produk'] = namaProduk;
+    request.fields['deskripsi'] = deskripsi;
+    request.fields['harga_produk'] = hargaProduk.toString();
+    request.fields['category_id'] = categoryId.toString();
+    
+    // API Multipart biasanya meminta string boolean ("true"/"false") 
+    request.fields['is_available'] = isAvailable.toString(); 
+    
+    // Karena kita hanya ubah status HABIS/TERSEDIA, kita tidak mengirim file 'image'
+    
+    final response = await request.send();
+    final body = await response.stream.bytesToString();
+
+    return jsonDecode(body);
   }
 
-  // Mengupdate detail produk (dengan upload gambar via bytes opsional)
+  // Mengupdate detail produk BESERTA Gambar
   Future<Map<String, dynamic>> updateProduct({
     required String id,
     required String namaProduk,
@@ -130,8 +151,7 @@ class ProductService {
     request.fields['deskripsi'] = deskripsi;
     request.fields['harga_produk'] = hargaProduk.toString();
     request.fields['category_id'] = categoryId.toString();
-    // Pada multipart request boolean biasanya dikirim sebagai string 'true' / 'false' atau '1' / '0'. Kita gunakan '1' / '0'
-    request.fields['is_available'] = isAvailable ? "1" : "0";
+    request.fields['is_available'] = isAvailable.toString();
 
     if (imageBytes != null) {
       request.files.add(
@@ -149,13 +169,33 @@ class ProductService {
     return jsonDecode(body);
   }
 
-  // Menghapus produk
+  // --- DIPERBARUI: Menghapus produk (Soft Delete) ---
+  // Menggunakan PUT /api/products/{id}/status dengan format application/json
   Future<Map<String, dynamic>> deleteProduct(String id) async {
     final headers = await ApiHelper.authHeaders();
+    headers['Content-Type'] = 'application/json';
 
-    final response = await http.delete(
-      Uri.parse("${Api.baseUrl}/products/$id"),
+    final response = await http.put(
+      Uri.parse("${Api.baseUrl}/products/$id/status"),
       headers: headers,
+      body: jsonEncode({
+        "is_active": false, // Mengirim data sesuai endpoint Gambar 2
+      }),
+    );
+
+    return jsonDecode(response.body);
+  }
+
+  Future<Map<String, dynamic>> restoreProduct(String id) async {
+    final headers = await ApiHelper.authHeaders();
+    headers['Content-Type'] = 'application/json';
+
+    final response = await http.put(
+      Uri.parse("${Api.baseUrl}/products/$id/status"),
+      headers: headers,
+      body: jsonEncode({
+        "is_active": true, // Mengembalikan status aktif menjadi true
+      }),
     );
 
     return jsonDecode(response.body);

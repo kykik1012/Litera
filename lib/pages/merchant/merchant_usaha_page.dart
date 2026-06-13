@@ -50,7 +50,6 @@ class _MerchantUsahaPageState extends State<MerchantUsahaPage> {
   Future<void> _loadData() async {
     setState(() => _isLoading = true);
     
-    // --- DIPERBARUI: Wajib _loadMerchantProfile() dulu agar nama bisnis didapat ---
     await _loadMerchantProfile();
     await _loadProducts();
     
@@ -122,10 +121,10 @@ class _MerchantUsahaPageState extends State<MerchantUsahaPage> {
 
         final allProducts = data.map((json) => ProductModel.fromJson(json)).toList();
         
-        // --- DIPERBARUI: Saring produk pakai variabel _namaBisnis ---
+        // --- DIPERBARUI: Saring produk hanya yang MILIK MERCHANT & STATUS AKTIF ---
         if (_namaBisnis.isNotEmpty) {
           _products = allProducts
-              .where((p) => p.namaBisnis.toLowerCase() == _namaBisnis.toLowerCase())
+              .where((p) => p.namaBisnis.toLowerCase() == _namaBisnis.toLowerCase() && p.isActive == true)
               .toList();
         } else {
           _products = [];
@@ -335,16 +334,19 @@ class _MerchantUsahaPageState extends State<MerchantUsahaPage> {
             const SizedBox(height: 16),
             // Tombol Edit Profil Usaha
             SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => const MerchantEditProfilUsahaPage(),
-                    ),
-                  );
-                },
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      // --- TAMBAHKAN HeroControllerScope.none ---
+                      MaterialPageRoute(
+                        builder: (_) => HeroControllerScope.none(
+                          child: const MerchantEditProfilUsahaPage(),
+                        ),
+                      ),
+                    );
+                  },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.white,
                   foregroundColor: tealDark,

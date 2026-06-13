@@ -6,13 +6,13 @@ class MerchantModel {
   final String? jamBuka;
   final String? jamTutup;
   final String? deskripsi;
+  final String? alamat; // <--- TAMBAHKAN INI
   final String? profilePicture;
   final String? imageUrl;
   final String? imageQr;
   final num? latitude;
   final num? longitude;
   final String status;
-
 
   MerchantModel({
     required this.id,
@@ -22,6 +22,7 @@ class MerchantModel {
     this.jamBuka,
     this.jamTutup,
     this.deskripsi,
+    this.alamat, // <--- TAMBAHKAN INI
     this.profilePicture,
     this.imageUrl,
     this.imageQr,
@@ -39,6 +40,7 @@ class MerchantModel {
       jamBuka: json['jam_buka']?.toString(),
       jamTutup: json['jam_tutup']?.toString(),
       deskripsi: json['deskripsi'] as String?,
+      alamat: json['alamat'] as String?, // <--- TAMBAHKAN INI (Aman jika API mengembalikan null)
       profilePicture: json['profile_picture'] as String?,
       imageUrl: json['image_url'] as String?,
       imageQr: json['image_qr'] as String?,
@@ -57,6 +59,7 @@ class MerchantModel {
       'jam_buka': jamBuka,
       'jam_tutup': jamTutup,
       'deskripsi': deskripsi,
+      'alamat': alamat, // <--- TAMBAHKAN INI
       'profile_picture': profilePicture,
       'image_url': imageUrl,
       'image_qr': imageQr,

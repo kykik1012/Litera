@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:async';
 import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
@@ -34,11 +35,18 @@ class _CustomerRouteDetailPageState extends State<CustomerRouteDetailPage> {
   bool _isLoading = true;
   int _currentStep = 0; 
   bool _isRouteFinished = false; 
+  StreamSubscription<Position>? _positionStreamSubscription; 
 
   @override
   void initState() {
     super.initState();
     _initData();
+  }
+
+  @override
+  void dispose() {
+    _positionStreamSubscription?.cancel();
+    super.dispose();
   }
 
   Future<void> _initData() async {
@@ -59,6 +67,19 @@ class _CustomerRouteDetailPageState extends State<CustomerRouteDetailPage> {
 
     Position position = await Geolocator.getCurrentPosition();
     _currentLocation = LatLng(position.latitude, position.longitude);
+
+    _positionStreamSubscription ??= Geolocator.getPositionStream(
+      locationSettings: const LocationSettings(
+        accuracy: LocationAccuracy.high,
+        distanceFilter: 5,
+      ),
+    ).listen((Position newPosition) {
+      if (mounted) {
+        setState(() {
+          _currentLocation = LatLng(newPosition.latitude, newPosition.longitude);
+        });
+      }
+    });
   }
 
   // Meminta data rute berkelok dari OSRM

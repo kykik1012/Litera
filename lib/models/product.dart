@@ -9,6 +9,7 @@ class ProductModel {
   final DateTime? updatedAt;
   final String namaBisnis;
   final int? categoryId;
+  final bool isActive;
 
   ProductModel({
     required this.id,
@@ -21,6 +22,7 @@ class ProductModel {
     this.updatedAt,
     required this.namaBisnis,
     this.categoryId,
+    this.isActive = true,
   });
 
   factory ProductModel.fromJson(Map<String, dynamic> json) {
@@ -35,6 +37,7 @@ class ProductModel {
       updatedAt: json['updated_at'] != null ? DateTime.parse(json['updated_at']) : null,
       namaBisnis: json['nama_bisnis'] as String,
       categoryId: json['category_id'] != null ? int.tryParse(json['category_id'].toString()) : null,
+      isActive: json['is_active'] ?? true,
     );
   }
 }
