@@ -153,33 +153,44 @@ class _MerchantKelolaPromoPageState extends State<MerchantKelolaPromoPage> {
     return Scaffold(
       backgroundColor: Colors.grey[50],
       appBar: AppBar(
-        backgroundColor: tealDark,
-        foregroundColor: Colors.white,
-        title: Text(
-          "Kelola Promo Toko",
-          style: GoogleFonts.poppins(fontWeight: FontWeight.bold, fontSize: 16),
-        ),
+        backgroundColor: Colors.transparent,
         elevation: 0,
+        automaticallyImplyLeading: false,
+        title: Padding(
+          padding: const EdgeInsets.only(top: 8.0),
+          child: Text(
+            "Kelola Promo",
+            style: GoogleFonts.poppins(
+              fontWeight: FontWeight.bold, 
+              fontSize: 22,
+              color: tealDark,
+            ),
+          ),
+        ),
       ),
       // --- TOMBOL TAMBAH PROMO ---
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () async {
-          // Buka halaman tambah promo, tunggu sampai kembali
-          final result = await Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => const MerchantTambahPromoPage()),
-          );
-          
-          // Jika berhasil menambahkan, refresh halaman
-          if (result == true) {
-            _loadData();
-          }
-        },
-        backgroundColor: limeGreen,
-        icon: const Icon(Icons.add, color: tealDark),
-        label: Text(
-          "Buat Promo",
-          style: GoogleFonts.poppins(fontWeight: FontWeight.w600, color: tealDark),
+      floatingActionButton: Padding(
+        padding: const EdgeInsets.only(bottom: 95.0),
+        child: FloatingActionButton.extended(
+          onPressed: () async {
+            // Buka halaman tambah promo, tunggu sampai kembali
+            final result = await Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const MerchantTambahPromoPage()),
+            );
+            
+            // Jika berhasil menambahkan, refresh halaman
+            if (result == true) {
+              _loadData();
+            }
+          },
+          backgroundColor: limeGreen,
+          elevation: 4,
+          icon: const Icon(Icons.add, color: tealDark),
+          label: Text(
+            "Buat Promo",
+            style: GoogleFonts.poppins(fontWeight: FontWeight.w600, color: tealDark),
+          ),
         ),
       ),
       body: _isLoading
@@ -190,7 +201,7 @@ class _MerchantKelolaPromoPageState extends State<MerchantKelolaPromoPage> {
                   color: tealDark,
                   onRefresh: _loadData,
                   child: ListView.builder(
-                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
+                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 160),
                     itemCount: _myPromotions.length,
                     itemBuilder: (context, index) {
                       return _buildPromoCard(_myPromotions[index]);

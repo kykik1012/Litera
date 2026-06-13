@@ -163,6 +163,9 @@ class _MerchantUlasanPageState extends State<MerchantUlasanPage> {
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
         ),
+        borderRadius: BorderRadius.vertical(
+          bottom: Radius.circular(24),
+        ),
       ),
       child: SafeArea(
         bottom: false,
@@ -292,13 +295,13 @@ class _MerchantUlasanPageState extends State<MerchantUlasanPage> {
   // ═══════════════════════════════════════════
   Widget _buildTabFilters() {
     return Container(
-      color: Colors.white,
+      color: Colors.transparent,
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
       child: Row(
         children: [
           _buildTabChip('Semua', 0, null),
           const SizedBox(width: 10),
-          _buildTabChip('Foto & Vidio', 2, _photoReviewCount),
+          _buildTabChip('Foto', 2, _photoReviewCount),
         ],
       ),
     );

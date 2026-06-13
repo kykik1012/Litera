@@ -94,7 +94,7 @@ class ProductService {
     headers['Content-Type'] = 'application/json';
 
     final response = await http.put(
-      Uri.parse("${Api.baseUrl}/products/$id"),
+      Uri.parse("${Api.baseUrl}/products/$id/status"),
       headers: headers,
       body: jsonEncode({
         "is_available": isAvailable,
@@ -102,6 +102,51 @@ class ProductService {
     );
 
     return jsonDecode(response.body);
+  }
+
+  // Mengupdate detail produk (dengan upload gambar via bytes opsional)
+  Future<Map<String, dynamic>> updateProduct({
+    required String id,
+    required String namaProduk,
+    required String deskripsi,
+    required int hargaProduk,
+    required int categoryId,
+    required bool isAvailable,
+    Uint8List? imageBytes,
+    String? imageFileName,
+  }) async {
+    final token = await SharedPrefHelper.getToken();
+
+    final request = http.MultipartRequest(
+      "PUT",
+      Uri.parse("${Api.baseUrl}/products/$id"),
+    );
+
+    request.headers.addAll({
+      "Authorization": "Bearer $token",
+    });
+
+    request.fields['nama_produk'] = namaProduk;
+    request.fields['deskripsi'] = deskripsi;
+    request.fields['harga_produk'] = hargaProduk.toString();
+    request.fields['category_id'] = categoryId.toString();
+    // Pada multipart request boolean biasanya dikirim sebagai string 'true' / 'false' atau '1' / '0'. Kita gunakan '1' / '0'
+    request.fields['is_available'] = isAvailable ? "1" : "0";
+
+    if (imageBytes != null) {
+      request.files.add(
+        http.MultipartFile.fromBytes(
+          "image",
+          imageBytes,
+          filename: imageFileName ?? "product_image_updated.jpg",
+        ),
+      );
+    }
+
+    final response = await request.send();
+    final body = await response.stream.bytesToString();
+
+    return jsonDecode(body);
   }
 
   // Menghapus produk

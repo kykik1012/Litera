@@ -28,6 +28,7 @@ class _RegisterPageState extends State<RegisterPage> {
   bool isPasswordHidden = true;
   bool isConfirmPasswordHidden = true;
   bool _agreeToTerms = false;
+  int _selectedRole = 2; // 2: Customer, 1: Merchant
 
   // Focus nodes
   final _usernameFocus = FocusNode();
@@ -79,7 +80,7 @@ class _RegisterPageState extends State<RegisterPage> {
         name: nameController.text.trim(),
         email: emailController.text.trim(),
         password: passwordController.text,
-        role: 2,
+        role: _selectedRole,
       );
 
       if (response["success"] == true) {
@@ -227,6 +228,107 @@ class _RegisterPageState extends State<RegisterPage> {
                   ),
 
                   const SizedBox(height: 36),
+
+                  // Role Selection
+                  Text(
+                    'Pilih Peran Anda',
+                    style: GoogleFonts.poppins(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: darkText,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: GestureDetector(
+                          onTap: () => setState(() => _selectedRole = 2),
+                          child: AnimatedContainer(
+                            duration: const Duration(milliseconds: 200),
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            decoration: BoxDecoration(
+                              color: _selectedRole == 2 ? tealColor : Colors.white,
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                color: _selectedRole == 2 ? tealColor : underlineColor,
+                                width: 1.5,
+                              ),
+                              boxShadow: _selectedRole == 2 ? [
+                                BoxShadow(
+                                  color: tealColor.withValues(alpha: 0.2),
+                                  blurRadius: 8,
+                                  offset: const Offset(0, 4),
+                                )
+                              ] : [],
+                            ),
+                            child: Column(
+                              children: [
+                                Icon(
+                                  Icons.person_outline,
+                                  color: _selectedRole == 2 ? Colors.white : subtitleColor,
+                                  size: 28,
+                                ),
+                                const SizedBox(height: 8),
+                                Text(
+                                  'Customer',
+                                  style: GoogleFonts.poppins(
+                                    fontSize: 14,
+                                    fontWeight: _selectedRole == 2 ? FontWeight.w600 : FontWeight.w500,
+                                    color: _selectedRole == 2 ? Colors.white : subtitleColor,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: GestureDetector(
+                          onTap: () => setState(() => _selectedRole = 1),
+                          child: AnimatedContainer(
+                            duration: const Duration(milliseconds: 200),
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            decoration: BoxDecoration(
+                              color: _selectedRole == 1 ? tealColor : Colors.white,
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                color: _selectedRole == 1 ? tealColor : underlineColor,
+                                width: 1.5,
+                              ),
+                              boxShadow: _selectedRole == 1 ? [
+                                BoxShadow(
+                                  color: tealColor.withValues(alpha: 0.2),
+                                  blurRadius: 8,
+                                  offset: const Offset(0, 4),
+                                )
+                              ] : [],
+                            ),
+                            child: Column(
+                              children: [
+                                Icon(
+                                  Icons.storefront_outlined,
+                                  color: _selectedRole == 1 ? Colors.white : subtitleColor,
+                                  size: 28,
+                                ),
+                                const SizedBox(height: 8),
+                                Text(
+                                  'Merchant',
+                                  style: GoogleFonts.poppins(
+                                    fontSize: 14,
+                                    fontWeight: _selectedRole == 1 ? FontWeight.w600 : FontWeight.w500,
+                                    color: _selectedRole == 1 ? Colors.white : subtitleColor,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 24),
 
                   // Username field
                   _buildUnderlineField(

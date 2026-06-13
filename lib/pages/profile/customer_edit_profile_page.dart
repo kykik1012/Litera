@@ -244,7 +244,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
                               child: ClipOval(
                                 child: selectedImageBytes != null
                                     ? Image.memory(selectedImageBytes!, fit: BoxFit.cover, width: 90, height: 90)
-                                    : profilePicture != null
+                                    : profilePicture != null && profilePicture!.isNotEmpty
                                         ? Image.network(
                                             Api.getImageUrl(profilePicture), fit: BoxFit.cover, width: 90, height: 90,
                                             errorBuilder: (_, __, ___) => const Icon(Icons.person, size: 44, color: Color(0xFF145C54)),

@@ -6,9 +6,9 @@ class RouteDetailModel {
   final num latitude;
   final num longitude;
   final String judulRute;
-  
+
   // Tambahkan variabel ini untuk menyimpan jarak (default 0.0)
-  double distanceToUser = 0.0; 
+  double distanceToUser = 0.0;
 
   RouteDetailModel({
     required this.id,

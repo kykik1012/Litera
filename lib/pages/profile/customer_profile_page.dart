@@ -164,7 +164,7 @@ class _ProfilePageState extends State<ProfilePage> {
                                   width: 2,
                                 ),
                               ),
-                              child: profilePicture != null
+                              child: profilePicture != null && profilePicture!.isNotEmpty
                                   ? ClipOval(
                                       child: Image.network(
                                         Api.getImageUrl(profilePicture),

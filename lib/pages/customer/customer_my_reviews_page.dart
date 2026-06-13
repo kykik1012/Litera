@@ -130,84 +130,148 @@ class _CustomerMyReviewsPageState extends State<CustomerMyReviewsPage> {
     return Scaffold(
       backgroundColor: const Color(0xFFF5F7F8),
       appBar: AppBar(
-        backgroundColor: darkGreen,
-        foregroundColor: Colors.white,
-        title: const Text("Review Saya"),
+        backgroundColor: const Color(0xFF0D3B2E),
+        elevation: 0,
+        toolbarHeight: 0,
       ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : _myReviews.isEmpty
-              ? const Center(child: Text("Kamu belum pernah menulis ulasan."))
-              : ListView.builder(
-                  padding: const EdgeInsets.all(16),
-                  itemCount: _myReviews.length,
-                  itemBuilder: (context, index) {
-                    final review = _myReviews[index];
-                    return Card(
-                      elevation: 1,
-                      margin: const EdgeInsets.only(bottom: 16),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                      child: Padding(
-                        padding: const EdgeInsets.all(16),
+      body: Column(
+        children: [
+          Container(
+            width: double.infinity,
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                colors: [Color(0xFF0D3B2E), Color(0xFF1A8A7A)],
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+              ),
+              borderRadius: BorderRadius.only(
+                bottomLeft: Radius.circular(30),
+                bottomRight: Radius.circular(30),
+              ),
+            ),
+            padding: const EdgeInsets.fromLTRB(24, 20, 24, 32),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    GestureDetector(
+                      onTap: () => Navigator.pop(context),
+                      child: const Icon(Icons.arrow_back_ios_new, color: Colors.white, size: 20),
+                    ),
+                    const SizedBox(width: 16),
+                    const Text(
+                      "Review Saya",
+                      style: TextStyle(color: Colors.white, fontSize: 26, fontWeight: FontWeight.bold),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                const Text(
+                  "Kumpulan ulasan dan pengalamanmu di berbagai merchant Litera",
+                  style: TextStyle(color: Colors.white70, fontSize: 13),
+                ),
+              ],
+            ),
+          ),
+          Expanded(
+            child: _isLoading
+                ? const Center(child: CircularProgressIndicator())
+                : _myReviews.isEmpty
+                    ? Center(
                         child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            // Header: Nama Toko & Rating
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Row(
-                                  children: [
-                                    Icon(Icons.storefront, color: darkGreen, size: 20),
-                                    const SizedBox(width: 8),
-                                    Text(review.namaBisnis, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: darkGreen)),
-                                  ],
-                                ),
-                                Row(
-                                  children: List.generate(5, (i) => Icon(
-                                    i < review.rating ? Icons.star_rounded : Icons.star_border_rounded,
-                                    color: Colors.amber, size: 16,
-                                  )),
-                                )
-                              ],
-                            ),
-                            const Divider(height: 24),
-                            
-                            // Konten Ulasan
-                            Text(review.deskripsi, style: TextStyle(color: Colors.grey[800])),
-                            
-                            if (review.imageUrl != null && review.imageUrl!.isNotEmpty) ...[
-                              const SizedBox(height: 12),
-                              ClipRRect(
-                                borderRadius: BorderRadius.circular(8),
-                                child: Image.network(review.imageUrl!, width: 100, height: 100, fit: BoxFit.cover),
-                              ),
-                            ],
-                            
+                            Image.asset('assets/images/data_kosong.png', height: 150),
                             const SizedBox(height: 16),
-                            
-                            // Tombol Edit dan Hapus
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.end,
-                              children: [
-                                ElevatedButton.icon(
-                                  onPressed: () => _deleteReview(review.id),
-                                  icon: const Icon(Icons.delete, size: 16),
-                                  label: const Text("Hapus"),
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: Colors.red.shade50,
-                                    foregroundColor: Colors.red,
-                                    elevation: 0,
-                                  ),
-                                ),
-                              ],
-                            )
+                            Text("Belum Ada Ulasan", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: darkGreen)),
+                            const SizedBox(height: 8),
+                            const Text("Kamu belum pernah menulis ulasan.\nBagikan pengalamanmu sekarang!", textAlign: TextAlign.center, style: TextStyle(color: Colors.grey)),
                           ],
                         ),
+                      )
+                    : ListView.builder(
+                        padding: const EdgeInsets.all(16),
+                        itemCount: _myReviews.length,
+                        itemBuilder: (context, index) {
+                          final review = _myReviews[index];
+                          return Card(
+                            elevation: 1,
+                            margin: const EdgeInsets.only(bottom: 16),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                            child: Padding(
+                              padding: const EdgeInsets.all(16),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  // Header: Nama Toko & Rating
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Expanded(
+                                        child: Row(
+                                          children: [
+                                            Icon(Icons.storefront, color: darkGreen, size: 20),
+                                            const SizedBox(width: 8),
+                                            Expanded(
+                                              child: Text(
+                                                review.namaBisnis, 
+                                                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: darkGreen),
+                                                maxLines: 1,
+                                                overflow: TextOverflow.ellipsis,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                      Row(
+                                        children: List.generate(5, (i) => Icon(
+                                          i < review.rating ? Icons.star_rounded : Icons.star_border_rounded,
+                                          color: Colors.amber, size: 16,
+                                        )),
+                                      )
+                                    ],
+                                  ),
+                                  const Divider(height: 24),
+                                  
+                                  // Konten Ulasan
+                                  Text(review.deskripsi, style: TextStyle(color: Colors.grey[800])),
+                                  
+                                  if (review.imageUrl != null && review.imageUrl!.isNotEmpty) ...[
+                                    const SizedBox(height: 12),
+                                    ClipRRect(
+                                      borderRadius: BorderRadius.circular(8),
+                                      child: Image.network(review.imageUrl!, width: 100, height: 100, fit: BoxFit.cover),
+                                    ),
+                                  ],
+                                  
+                                  const SizedBox(height: 16),
+                                  
+                                  // Tombol Edit dan Hapus
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.end,
+                                    children: [
+                                      ElevatedButton.icon(
+                                        onPressed: () => _deleteReview(review.id),
+                                        icon: const Icon(Icons.delete, size: 16),
+                                        label: const Text("Hapus"),
+                                        style: ElevatedButton.styleFrom(
+                                          backgroundColor: Colors.red.shade50,
+                                          foregroundColor: Colors.red,
+                                          elevation: 0,
+                                        ),
+                                      ),
+                                    ],
+                                  )
+                                ],
+                              ),
+                            ),
+                          );
+                        },
                       ),
-                    );
-                  },
-                ),
+          ),
+        ],
+      ),
     );
   }
 }

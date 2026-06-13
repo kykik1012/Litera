@@ -113,10 +113,10 @@ class _CustomerJelajahPageState extends State<CustomerJelajahPage> {
       child: Scaffold(
         backgroundColor: const Color(0xFFF5F7F8),
         appBar: AppBar(
-          backgroundColor: darkGreen,
-          elevation: 0,
-          toolbarHeight: 0, 
-          bottom: TabBar(
+        backgroundColor: const Color(0xFF0D3B2E),
+        elevation: 0,
+        toolbarHeight: 0,
+        bottom: TabBar(
             labelColor: limeGreen,
             unselectedLabelColor: Colors.white70,
             indicatorColor: limeGreen,
@@ -136,7 +136,7 @@ class _CustomerJelajahPageState extends State<CustomerJelajahPage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   _buildHeroSection(),
-                  const SizedBox(height: 110), 
+                  const SizedBox(height: 24), 
                   if (_routes.isNotEmpty) _buildRouteList(),
                 ],
               ),
@@ -155,137 +155,108 @@ class _CustomerJelajahPageState extends State<CustomerJelajahPage> {
 
   // --- KOMPONEN HEADER HERO ---
   Widget _buildHeroSection() {
-    return Stack(
-      clipBehavior: Clip.none,
-      children: [
-        Container(
-          height: 250,
-          width: double.infinity,
-          decoration: BoxDecoration(
-            color: darkGreen, // DIPERBARUI: Warna dasar jika tidak ada gambar rute
-            image: _routes.isNotEmpty && _routes[0].imageUrl != null && _routes[0].imageUrl!.isNotEmpty
-                ? DecorationImage(
-                    image: NetworkImage(_routes[0].imageUrl!),
-                    fit: BoxFit.cover,
-                  )
-                : null, // DIPERBARUI: Tidak lagi menggunakan gambar acak dari internet
-          ),
-          child: Container(
-            decoration: BoxDecoration(
+    return Container(
+      width: double.infinity,
+            decoration: const BoxDecoration(
               gradient: LinearGradient(
-                colors: [darkGreen.withOpacity(0.9), Colors.transparent],
+                colors: [Color(0xFF0D3B2E), Color(0xFF1A8A7A)],
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
               ),
-            ),
-            padding: const EdgeInsets.only(top: 20, left: 20, right: 20),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Icon(Icons.location_on, color: limeGreen, size: 16),
-                    const SizedBox(width: 4),
-                    Text(
-                      "Jember",
-                      style: TextStyle(color: limeGreen, fontWeight: FontWeight.bold),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                const Text(
-                  "Jelajahi Rute",
-                  style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 4),
-                const Text(
-                  "Pilih petualangan budaya yang ingin\nkamu ikuti",
-                  style: TextStyle(color: Colors.white70, fontSize: 12),
-                ),
-              ],
-            ),
-          ),
+              borderRadius: BorderRadius.only(
+          bottomLeft: Radius.circular(30),
+          bottomRight: Radius.circular(30),
         ),
-
-        Positioned(
-          top: 180,
-          left: 16,
-          right: 16,
-          child: Container(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [limeGreen, const Color(0xFF8BC34A)],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
+      ),
+      padding: const EdgeInsets.fromLTRB(24, 24, 24, 32),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.location_on, color: limeGreen, size: 16),
+              const SizedBox(width: 4),
+              Text(
+                "Jember",
+                style: TextStyle(color: limeGreen, fontWeight: FontWeight.bold),
               ),
-              borderRadius: BorderRadius.circular(20),
-              boxShadow: [
-                BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 10, offset: const Offset(0, 5)),
-              ],
-            ),
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      _routes.isNotEmpty ? _routes[0].judulRute : "Rute Populer",
-                      style: TextStyle(color: darkGreen, fontWeight: FontWeight.bold, fontSize: 16),
-                    ),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: darkGreen,
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Row(
-                        children: [
-                          const Icon(Icons.star, color: Colors.amber, size: 12),
-                          const SizedBox(width: 4),
-                          Text(
+            ],
+          ),
+          const SizedBox(height: 12),
+          const Text(
+            "Jelajahi Rute",
+            style: TextStyle(color: Colors.white, fontSize: 28, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 4),
+          const Text(
+            "Pilih petualangan budaya yang ingin\nkamu ikuti",
+            style: TextStyle(color: Colors.white70, fontSize: 13),
+          ),
+          const SizedBox(height: 24),
+          if (_routes.isNotEmpty)
+            Container(
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.08),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: Colors.white.withOpacity(0.1)),
+              ),
+              padding: const EdgeInsets.all(16),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: limeGreen,
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: Text(
                             "Paling Populer",
-                            style: TextStyle(color: limeGreen, fontSize: 10),
+                            style: TextStyle(color: darkGreen, fontSize: 10, fontWeight: FontWeight.bold),
                           ),
-                        ],
-                      ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          _routes[0].judulRute,
+                          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
                     ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: ElevatedButton(
+                  ),
+                  const SizedBox(width: 12),
+                  ElevatedButton(
                     onPressed: () {
-                      if (_routes.isNotEmpty) {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => CustomerRoutePreviewPage(
-                              thematicRouteId: int.parse(_routes[0].id),
-                              judulRute: _routes[0].judulRute,
-                              // DIPERBARUI: Pastikan mengirimkan deskripsiRute jika di customer_route_preview_page.dart menjadikannya required
-                              deskripsiRute: _routes[0].deskripsi, 
-                            ),
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => CustomerRoutePreviewPage(
+                            thematicRouteId: int.parse(_routes[0].id),
+                            judulRute: _routes[0].judulRute,
+                            deskripsiRute: _routes[0].deskripsi, 
                           ),
-                        );
-                      }
+                        ),
+                      );
                     },
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: darkGreen,
-                      foregroundColor: limeGreen,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                      backgroundColor: limeGreen,
+                      foregroundColor: darkGreen,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                      elevation: 0,
                     ),
-                    child: const Text("Mulai Sekarang", style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                    child: const Text("Mulai", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 

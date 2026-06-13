@@ -100,7 +100,7 @@ class _MerchantDashboardPageState extends State<MerchantDashboardPage> {
               .where((p) => p.namaBisnis.toLowerCase() == _namaBisnis.toLowerCase())
               .toList();
         } else {
-          _products = allProducts;
+          _products = [];
         }
       }
     } catch (e) {
@@ -259,8 +259,6 @@ class _MerchantDashboardPageState extends State<MerchantDashboardPage> {
                     _buildHeaderSection(),
                     _buildStatusOperasionalSection(),
                     
-                    _buildKelolaPromoCard(),
-                    
                     // --- TOMBOL BARU UNTUK MEMBUKA QR ---
                     _buildQrTokoCard(),
 
@@ -283,6 +281,10 @@ class _MerchantDashboardPageState extends State<MerchantDashboardPage> {
           colors: [tealDark, tealGradientEnd],
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
+        ),
+        borderRadius: BorderRadius.only(
+          bottomLeft: Radius.circular(24),
+          bottomRight: Radius.circular(24),
         ),
       ),
       child: SafeArea(
@@ -338,46 +340,7 @@ class _MerchantDashboardPageState extends State<MerchantDashboardPage> {
                   ],
                 ),
               ),
-              Stack(
-                children: [
-                  Container(
-                    width: 42,
-                    height: 42,
-                    decoration: const BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: Colors.white,
-                    ),
-                    child: const Icon(
-                      Icons.notifications_outlined,
-                      color: tealDark,
-                      size: 24,
-                    ),
-                  ),
-                  Positioned(
-                    right: 0,
-                    top: 0,
-                    child: Container(
-                      width: 18,
-                      height: 18,
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFF59E0B),
-                        shape: BoxShape.circle,
-                        border: Border.all(color: tealDark, width: 2),
-                      ),
-                      child: Center(
-                        child: Text(
-                          '2',
-                          style: GoogleFonts.poppins(
-                            fontSize: 9,
-                            fontWeight: FontWeight.w700,
-                            color: Colors.white,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
+
             ],
           ),
         ),
@@ -385,84 +348,7 @@ class _MerchantDashboardPageState extends State<MerchantDashboardPage> {
     );
   }
 
-  // ═══════════════════════════════════════════
-  // KELOLA PROMO 
-  // ═══════════════════════════════════════════
-  Widget _buildKelolaPromoCard() {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
-      child: InkWell(
-        onTap: () {
-          // Navigasi ke halaman baru
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              // --- UBAH BAGIAN INI ---
-              builder: (context) => const MerchantKelolaPromoPage(), 
-            ),
-          );
-        },
-        borderRadius: BorderRadius.circular(16),
-        child: Container(
-          width: double.infinity,
-          padding: const EdgeInsets.all(18),
-          decoration: BoxDecoration(
-            gradient: const LinearGradient(
-              colors: [tealDark, promoCardColor],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
-            borderRadius: BorderRadius.circular(16),
-            boxShadow: [
-              BoxShadow(
-                color: tealDark.withOpacity(0.2),
-                blurRadius: 12,
-                offset: const Offset(0, 4),
-              ),
-            ],
-          ),
-          child: Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.2),
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(Icons.local_offer, color: limeGreen, size: 28),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Kelola Promo',
-                      style: GoogleFonts.poppins(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w700,
-                        color: Colors.white,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      'Buat diskon baru untuk menarik lebih banyak pelanggan.',
-                      style: GoogleFonts.poppins(
-                        fontSize: 12,
-                        color: Colors.white.withOpacity(0.8),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 8),
-              const Icon(Icons.chevron_right, color: Colors.white),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
+
 
   // ═══════════════════════════════════════════
   // TAMPILKAN QR TOKO KARTU BARU
@@ -649,7 +535,7 @@ class _MerchantDashboardPageState extends State<MerchantDashboardPage> {
               Text(
                 'Katalog Saya',
                 style: GoogleFonts.poppins(
-                  fontSize: 18,
+                  fontSize: 16,
                   fontWeight: FontWeight.w700,
                   color: const Color(0xFF1A1A2E),
                 ),
@@ -675,10 +561,11 @@ class _MerchantDashboardPageState extends State<MerchantDashboardPage> {
               ),
             ],
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: 12),
           _products.isEmpty
               ? _buildEmptyKatalog()
               : ListView.separated(
+                  padding: EdgeInsets.zero,
                   physics: const NeverScrollableScrollPhysics(),
                   shrinkWrap: true,
                   itemCount: _products.length > 5 ? 5 : _products.length,

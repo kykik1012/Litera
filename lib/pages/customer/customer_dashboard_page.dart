@@ -298,7 +298,11 @@ class _CustomerDashboardPageState extends State<CustomerDashboardPage> {
             bottom: 30,
           ),
           decoration: const BoxDecoration(
-            color: Color(0xFF003D33),
+            gradient: LinearGradient(
+              colors: [Color(0xFF0D3B2E), Color(0xFF1A8A7A)],
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+            ),
             borderRadius: BorderRadius.only(
               bottomLeft: Radius.circular(24),
               bottomRight: Radius.circular(24),
@@ -306,15 +310,22 @@ class _CustomerDashboardPageState extends State<CustomerDashboardPage> {
           ),
           child: Row(
             children: [
-              CircleAvatar(
-                radius: 24,
-                backgroundColor: const Color(0xFFAEEA00),
-                backgroundImage: _profilePicture != null 
-                    ? NetworkImage(Api.getImageUrl(_profilePicture))
-                    : null,
-                child: _profilePicture == null 
-                    ? const Icon(Icons.person, color: Color(0xFF003D33), size: 30)
-                    : null,
+              ClipOval(
+                child: _profilePicture != null && _profilePicture!.isNotEmpty
+                    ? Image.network(
+                        Api.getImageUrl(_profilePicture),
+                        width: 48,
+                        height: 48,
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, __, ___) => Container(
+                          width: 48, height: 48, color: const Color(0xFFAEEA00),
+                          child: const Icon(Icons.person, color: Color(0xFF003D33), size: 30),
+                        ),
+                      )
+                    : Container(
+                        width: 48, height: 48, color: const Color(0xFFAEEA00),
+                        child: const Icon(Icons.person, color: Color(0xFF003D33), size: 30),
+                      ),
               ),
               const SizedBox(width: 12),
               Expanded(

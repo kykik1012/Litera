@@ -9,6 +9,7 @@ import 'package:litera/pages/super_admin/kelola_review.dart';
 import 'package:litera/pages/merchant/merchant_dashboard_page.dart';
 import 'package:litera/pages/merchant/merchant_usaha_page.dart';
 import 'package:litera/pages/merchant/merchant_ulasan_page.dart';
+import 'package:litera/pages/merchant/merchant_kelola_promo.dart';
 import 'package:litera/pages/customer/customer_promo_page.dart';
 import 'package:litera/pages/customer/customer_dashboard_page.dart';
 import 'package:litera/pages/customer/customer_jelajah_page.dart';
@@ -61,8 +62,8 @@ class _MainScreenState extends State<MainScreen> {
       return [
         const MerchantDashboardPage(),
         const MerchantUsahaPage(),
-        // Menu tengah Merchant diganti menjadi halaman kosong sementara (bisa diganti Tarik Saldo nanti)
-        const Center(child: Text("Halaman Tarik Saldo")), 
+        // Menu tengah Merchant diganti menjadi Promo
+        const MerchantKelolaPromoPage(), 
         const MerchantUlasanPage(),
         const MerchantProfilePage(),
       ];
@@ -214,7 +215,7 @@ class _MainScreenState extends State<MainScreen> {
       _buildNavItem(0, Icons.home_rounded, "Beranda"),
       _buildNavItem(1, Icons.storefront_outlined, "Usaha"),
       // Merchant: Background Hijau Tua, Ikon Putih
-      _buildCenterNavItem(2, Icons.account_balance_wallet_outlined, "Tarik", darkGreen, Colors.white),
+      _buildCenterNavItem(2, Icons.local_offer_outlined, "Promo", darkGreen, Colors.white),
       _buildNavItem(3, Icons.star_border_rounded, "Ulasan"),
       _buildNavItem(4, Icons.person_outline_rounded, "Profil"),
     ];

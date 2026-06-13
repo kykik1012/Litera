@@ -78,6 +78,14 @@ class _MerchantUsahaPageState extends State<MerchantUsahaPage> {
           _jamBuka = myMerchant["jam_buka"]?.toString();
           _jamTutup = myMerchant["jam_tutup"]?.toString();
           _imageUrl = myMerchant["image_url"]?.toString();
+        } else {
+          final userRes = await _userService.getUserById(userId);
+          if (userRes['success'] == true && userRes['data'] != null) {
+            final data = userRes['data'];
+            _namaBisnis = data['nama_bisnis'] ?? '';
+            _deskripsi = data['deskripsi'] ?? '';
+            _profilePicture = data['profile_picture'];
+          }
         }
       }
 
@@ -120,7 +128,7 @@ class _MerchantUsahaPageState extends State<MerchantUsahaPage> {
               .where((p) => p.namaBisnis.toLowerCase() == _namaBisnis.toLowerCase())
               .toList();
         } else {
-          _products = allProducts;
+          _products = [];
         }
       }
     } catch (e) {

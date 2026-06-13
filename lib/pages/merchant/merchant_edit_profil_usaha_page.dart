@@ -86,6 +86,13 @@ class _MerchantEditProfilUsahaPageState extends State<MerchantEditProfilUsahaPag
             _merchant = MerchantModel.fromJson(myMerchant.first);
             _populateFields();
             await _loadStats();
+          } else {
+            final userRes = await _userService.getUserById(userId);
+            if (userRes['success'] == true && userRes['data'] != null) {
+              final d = userRes['data'];
+              _namaController.text = d['nama_bisnis'] ?? '';
+              _deskripsiController.text = d['deskripsi'] ?? '';
+            }
           }
         }
       }
@@ -163,7 +170,7 @@ class _MerchantEditProfilUsahaPageState extends State<MerchantEditProfilUsahaPag
       _tahunController.text = "1976";
     }
     
-    _deskripsiController.text = _merchant!.deskripsi ?? 'Kami menjual kue lapis rumahan dengan rasa manis legit dan tekstur lembut berlapis...';
+    _deskripsiController.text = _merchant!.deskripsi ?? '';
   }
 
   String _formatTime(String timeStr) {
@@ -232,13 +239,42 @@ class _MerchantEditProfilUsahaPageState extends State<MerchantEditProfilUsahaPag
   }
 
   Future<void> _savePerubahan() async {
-    if (_merchant == null) return;
     setState(() => _isSaving = true);
     try {
        final day = _tanggalController.text.padLeft(2, '0');
        final month = _getMonthNumber(_bulanController.text).toString().padLeft(2, '0');
        final year = _tahunController.text;
        final dateStr = "$year-$month-$day";
+
+       final userId = await SharedPrefHelper.getUserId();
+
+       if (_merchant == null) {
+         if (userId != null) {
+           final res = await _userService.updateMerchant(
+             id: userId,
+             namaBisnis: _namaController.text,
+             deskripsi: _deskripsiController.text,
+             usahaDidirikan: dateStr,
+           );
+           
+           if (_profileBytes != null) {
+              await _userService.uploadProfilePicture(
+                id: userId, 
+                imageBytes: _profileBytes!,
+                imageFileName: _profileFile?.path.split('/').last ?? 'profile.jpg',
+              );
+           }
+           
+           if (!mounted) return;
+           if (res['success'] == true) {
+              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Profil berhasil disimpan')));
+              Navigator.pop(context, true);
+           } else {
+              ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(res['message'] ?? 'Gagal menyimpan')));
+           }
+         }
+         return;
+       }
 
        final res = await _merchantService.updateMerchantInformation(
           id: int.parse(_merchant!.id),
@@ -253,7 +289,6 @@ class _MerchantEditProfilUsahaPageState extends State<MerchantEditProfilUsahaPag
           qrFileName: _qrImage?.name,
        );
 
-       final userId = await SharedPrefHelper.getUserId();
        if (_profileBytes != null && userId != null) {
           await _userService.uploadProfilePicture(
             id: userId, 
@@ -345,23 +380,41 @@ class _MerchantEditProfilUsahaPageState extends State<MerchantEditProfilUsahaPag
                   width: double.infinity,
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(12),
-                    color: Colors.brown[300],
+                    color: Colors.grey[200],
                     image: _bannerBytes != null
                         ? DecorationImage(image: MemoryImage(_bannerBytes!), fit: BoxFit.cover)
                         : _merchant?.imageUrl != null
                             ? DecorationImage(image: NetworkImage(_merchant!.imageUrl!), fit: BoxFit.cover)
-                            : const DecorationImage(image: AssetImage('assets/images/data_kosong.png'), fit: BoxFit.cover),
+                            : null,
                   ),
-                  child: Align(
-                    alignment: Alignment.topRight,
-                    child: Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: CircleAvatar(
-                        backgroundColor: Colors.white,
-                        radius: 16,
-                        child: const Icon(Icons.edit_outlined, size: 18, color: Colors.black),
+                  child: Stack(
+                    children: [
+                      if (_bannerBytes == null && _merchant?.imageUrl == null)
+                        Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(Icons.photo_camera, size: 40, color: Colors.grey[500]),
+                              const SizedBox(height: 8),
+                              Text(
+                                "Tambahkan foto",
+                                style: GoogleFonts.poppins(color: Colors.grey[600], fontSize: 14, fontWeight: FontWeight.w500),
+                              ),
+                            ],
+                          ),
+                        ),
+                      Align(
+                        alignment: Alignment.topRight,
+                        child: Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: CircleAvatar(
+                            backgroundColor: Colors.white,
+                            radius: 16,
+                            child: const Icon(Icons.edit_outlined, size: 18, color: Colors.black),
+                          ),
+                        ),
                       ),
-                    ),
+                    ],
                   ),
                 ),
               ),
@@ -636,9 +689,11 @@ class _MerchantEditProfilUsahaPageState extends State<MerchantEditProfilUsahaPag
             controller: _deskripsiController,
             maxLines: 5,
             style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey[800]),
-            decoration: const InputDecoration(
+            decoration: InputDecoration(
               border: InputBorder.none,
-              contentPadding: EdgeInsets.all(16),
+              contentPadding: const EdgeInsets.all(16),
+              hintText: 'Mulai isi kisah usaha kamu...',
+              hintStyle: GoogleFonts.poppins(color: Colors.grey[400], fontSize: 12),
             ),
           ),
         ),

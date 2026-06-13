@@ -97,4 +97,66 @@ class MerchantService {
     final body = await response.stream.bytesToString();
     return jsonDecode(body);
   }
+
+  // --- UPDATE LOKASI MERCHANT ---
+  Future<Map<String, dynamic>> updateMerchantLocation({
+    required int id,
+    required double latitude,
+    required double longitude,
+  }) async {
+    final headers = await ApiHelper.authHeaders();
+    headers['Content-Type'] = 'application/json';
+
+    String alamat = "-";
+    bool isActive = true;
+    
+    // Coba ambil data lokasi yang sudah ada untuk mempertahankan alamat & is_active
+    try {
+      final getResponse = await http.get(
+        Uri.parse("${Api.baseUrl}/merchant-locations/$id"),
+        headers: headers,
+      );
+      if (getResponse.statusCode == 200) {
+        final data = jsonDecode(getResponse.body);
+        if (data['success'] == true && data['data'] != null) {
+          alamat = data['data']['alamat'] ?? "-";
+          isActive = data['data']['is_active'] ?? true;
+        }
+      }
+    } catch (e) {
+      // Abaikan error saat GET
+    }
+
+    // Lakukan PUT untuk update lokasi (menggunakan endpoint yang benar)
+    var response = await http.put(
+      Uri.parse("${Api.baseUrl}/merchant-locations/$id"),
+      headers: headers,
+      body: jsonEncode({
+        "latitude": latitude,
+        "longitude": longitude,
+        "alamat": alamat,
+        "is_active": isActive,
+      }),
+    );
+
+    var responseData = jsonDecode(response.body);
+
+    // Jika lokasi tidak ditemukan (baru pertama kali set), lakukan POST untuk create
+    if (response.statusCode == 404 || 
+       (responseData['success'] == false && responseData['message']?.toString().toLowerCase().contains('tidak ditemukan') == true)) {
+      response = await http.post(
+        Uri.parse("${Api.baseUrl}/merchant-locations"),
+        headers: headers,
+        body: jsonEncode({
+          "merchant_id": id,
+          "latitude": latitude,
+          "longitude": longitude,
+          "alamat": alamat,
+        }),
+      );
+      responseData = jsonDecode(response.body);
+    }
+
+    return responseData;
+  }
 }

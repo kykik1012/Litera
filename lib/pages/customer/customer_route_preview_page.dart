@@ -84,9 +84,9 @@ class _CustomerRoutePreviewPageState extends State<CustomerRoutePreviewPage> {
     return Scaffold(
       backgroundColor: const Color(0xFFF5F7F8),
       appBar: AppBar(
-        backgroundColor: const Color(0xFF003D33),
-        foregroundColor: Colors.white,
-        title: const Text("Detail Perjalanan"),
+        backgroundColor: const Color(0xFF0D3B2E),
+        elevation: 0,
+        toolbarHeight: 0,
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
@@ -97,45 +97,63 @@ class _CustomerRoutePreviewPageState extends State<CustomerRoutePreviewPage> {
                   children: [
                     // Header Info
                     Container(
-                      padding: const EdgeInsets.all(20),
+                      padding: const EdgeInsets.fromLTRB(24, 20, 24, 32),
                       width: double.infinity,
                       decoration: const BoxDecoration(
-                        color: Colors.white,
+                        gradient: LinearGradient(
+                          colors: [Color(0xFF0D3B2E), Color(0xFF1A8A7A)],
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                        ),
                         borderRadius: BorderRadius.only(
-                          bottomLeft: Radius.circular(24),
-                          bottomRight: Radius.circular(24),
+                          bottomLeft: Radius.circular(30),
+                          bottomRight: Radius.circular(30),
                         ),
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
+                          Row(
+                            children: [
+                              GestureDetector(
+                                onTap: () => Navigator.pop(context),
+                                child: const Icon(Icons.arrow_back_ios_new, color: Colors.white, size: 20),
+                              ),
+                              const SizedBox(width: 16),
+                              const Text(
+                                "Detail Perjalanan",
+                                style: TextStyle(color: Colors.white, fontSize: 26, fontWeight: FontWeight.bold),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 24),
                           Text(
                             widget.judulRute,
-                            style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Color(0xFF003D33)),
+                            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Color(0xFFAEEA00)),
                           ),
                           const SizedBox(height: 8),
                           Text(
                             widget.deskripsiRute,
-                            style: TextStyle(fontSize: 14, color: Colors.grey[800], height: 1.4),
+                            style: const TextStyle(fontSize: 13, color: Colors.white70, height: 1.4),
                           ),
-                          const SizedBox(height: 12),
+                          const SizedBox(height: 16),
                           Row(
                             children: [
-                              const Icon(Icons.location_on, color: Colors.red, size: 16),
-                              const SizedBox(width: 4),
-                              Text("${_routePoints.length} Destinasi Merchant", style: const TextStyle(color: Colors.grey, fontWeight: FontWeight.bold)),
+                              const Icon(Icons.location_on, color: Color(0xFFAEEA00), size: 16),
+                              const SizedBox(width: 6),
+                              Text("${_routePoints.length} Destinasi Merchant", style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12)),
                             ],
                           ),
                         ],
                       ),
                     ),
                     
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 24),
                     const Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 20),
+                      padding: EdgeInsets.symmetric(horizontal: 24),
                       child: Text("Urutan Perjalanan:", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
                     ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 12),
 
                     // List Urutan Toko
                     Expanded(

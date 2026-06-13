@@ -182,25 +182,61 @@ class _CustomerPromoPageState extends State<CustomerPromoPage> {
     return Scaffold(
       backgroundColor: const Color(0xFFF5F7F8),
       appBar: AppBar(
-        backgroundColor: darkGreen,
-        foregroundColor: Colors.white,
-        title: const Text("Promo & Diskon", style: TextStyle(fontWeight: FontWeight.bold)),
+        backgroundColor: const Color(0xFF0D3B2E),
         elevation: 0,
+        toolbarHeight: 0,
       ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : _promotions.isEmpty
-              ? _buildEmptyState()
-              : RefreshIndicator(
-                  onRefresh: _fetchPromotions,
-                  child: ListView.builder(
-                    padding: const EdgeInsets.all(16),
-                    itemCount: _promotions.length,
-                    itemBuilder: (context, index) {
-                      return _buildPromoCard(_promotions[index]);
-                    },
-                  ),
+      body: Column(
+        children: [
+          // Header Estetik
+          Container(
+            width: double.infinity,
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                colors: [Color(0xFF0D3B2E), Color(0xFF1A8A7A)],
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+              ),
+              borderRadius: BorderRadius.only(
+                bottomLeft: Radius.circular(30),
+                bottomRight: Radius.circular(30),
+              ),
+            ),
+            padding: const EdgeInsets.fromLTRB(24, 20, 24, 32),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  "Promo & Diskon",
+                  style: TextStyle(color: Colors.white, fontSize: 26, fontWeight: FontWeight.bold),
                 ),
+                const SizedBox(height: 6),
+                const Text(
+                  "Klaim voucher dan nikmati potongan harga khusus untukmu",
+                  style: TextStyle(color: Colors.white70, fontSize: 13),
+                ),
+              ],
+            ),
+          ),
+          // Body List
+          Expanded(
+            child: _isLoading
+                ? const Center(child: CircularProgressIndicator())
+                : _promotions.isEmpty
+                    ? _buildEmptyState()
+                    : RefreshIndicator(
+                        onRefresh: _fetchPromotions,
+                        child: ListView.builder(
+                          padding: const EdgeInsets.all(16),
+                          itemCount: _promotions.length,
+                          itemBuilder: (context, index) {
+                            return _buildPromoCard(_promotions[index]);
+                          },
+                        ),
+                      ),
+          ),
+        ],
+      ),
     );
   }
 

@@ -8,6 +8,7 @@ class ProductModel {
   final DateTime? createdAt;
   final DateTime? updatedAt;
   final String namaBisnis;
+  final int? categoryId;
 
   ProductModel({
     required this.id,
@@ -19,6 +20,7 @@ class ProductModel {
     this.createdAt,
     this.updatedAt,
     required this.namaBisnis,
+    this.categoryId,
   });
 
   factory ProductModel.fromJson(Map<String, dynamic> json) {
@@ -32,6 +34,7 @@ class ProductModel {
       createdAt: json['created_at'] != null ? DateTime.parse(json['created_at']) : null,
       updatedAt: json['updated_at'] != null ? DateTime.parse(json['updated_at']) : null,
       namaBisnis: json['nama_bisnis'] as String,
+      categoryId: json['category_id'] != null ? int.tryParse(json['category_id'].toString()) : null,
     );
   }
 }

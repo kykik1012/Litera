@@ -201,28 +201,79 @@ class _CustomerMyPromoPageState extends State<CustomerMyPromoPage> {
       child: Scaffold(
         backgroundColor: const Color(0xFFF5F7F8),
         appBar: AppBar(
-          backgroundColor: darkGreen,
-          foregroundColor: Colors.white,
-          title: const Text("Voucher Saya", style: TextStyle(fontWeight: FontWeight.bold)),
+          backgroundColor: const Color(0xFF0D3B2E),
           elevation: 0,
-          bottom: const TabBar(
-            labelColor: Color(0xFFAEEA00),
-            unselectedLabelColor: Colors.white70,
-            indicatorColor: Color(0xFFAEEA00),
-            tabs: [
-              Tab(text: "Tersedia"),
-              Tab(text: "Riwayat"),
-            ],
-          ),
+          toolbarHeight: 0,
         ),
-        body: _isLoading
-            ? const Center(child: CircularProgressIndicator())
-            : TabBarView(
+        body: Column(
+          children: [
+            Container(
+              width: double.infinity,
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [Color(0xFF0D3B2E), Color(0xFF1A8A7A)],
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                ),
+                borderRadius: BorderRadius.only(
+                  bottomLeft: Radius.circular(30),
+                  bottomRight: Radius.circular(30),
+                ),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _buildVoucherList(_activeVouchers, isActive: true),
-                  _buildVoucherList(_historyVouchers, isActive: false),
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(24, 20, 24, 16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            GestureDetector(
+                              onTap: () => Navigator.pop(context),
+                              child: const Icon(Icons.arrow_back_ios_new, color: Colors.white, size: 20),
+                            ),
+                            const SizedBox(width: 16),
+                            const Text(
+                              "Voucher Saya",
+                              style: TextStyle(color: Colors.white, fontSize: 26, fontWeight: FontWeight.bold),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                        const Text(
+                          "Kelola semua voucher diskon yang kamu miliki di satu tempat",
+                          style: TextStyle(color: Colors.white70, fontSize: 13),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const TabBar(
+                    labelColor: Color(0xFFAEEA00),
+                    unselectedLabelColor: Colors.white70,
+                    indicatorColor: Color(0xFFAEEA00),
+                    dividerColor: Colors.transparent,
+                    tabs: [
+                      Tab(text: "Tersedia"),
+                      Tab(text: "Riwayat"),
+                    ],
+                  ),
                 ],
               ),
+            ),
+            Expanded(
+              child: _isLoading
+                  ? const Center(child: CircularProgressIndicator())
+                  : TabBarView(
+                      children: [
+                        _buildVoucherList(_activeVouchers, isActive: true),
+                        _buildVoucherList(_historyVouchers, isActive: false),
+                      ],
+                    ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -233,11 +284,7 @@ class _CustomerMyPromoPageState extends State<CustomerMyPromoPage> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              isActive ? Icons.account_balance_wallet_outlined : Icons.history, 
-              size: 80, 
-              color: Colors.grey[400]
-            ),
+            Image.asset('assets/images/data_kosong.png', height: 150),
             const SizedBox(height: 16),
             Text(
               isActive ? "Dompet Voucher Kosong" : "Belum Ada Riwayat",

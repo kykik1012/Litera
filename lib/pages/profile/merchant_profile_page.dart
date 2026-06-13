@@ -8,6 +8,8 @@ import '../auth/login_page.dart';
 import '../../widgets/logout_bottom_sheet.dart';
 import '../merchant/merchant_edit_profil_usaha_page.dart';
 import '../merchant/merchant_change_password_page.dart';
+import '../merchant/merchant_update_location_page.dart';
+import 'package:latlong2/latlong.dart';
 import '../../helpers/secure_storage_helper.dart';
 import '../../services/biometric_service.dart';
 import '../../services/auth_service.dart';
@@ -25,12 +27,15 @@ class _MerchantProfilePageState extends State<MerchantProfilePage> {
 
   String username = "";
   String email = "";
+  String _namaBisnis = "";
   String? profilePicture;
   String _deskripsi = '';
   String? _usahaDidirikan;
   String? _jamBuka;
   String? _jamTutup;
   String? _imageUrl;
+  double? _latitude;
+  double? _longitude;
   bool biometricEnabled = false;
 
   final userService = UserService();
@@ -91,6 +96,9 @@ class _MerchantProfilePageState extends State<MerchantProfilePage> {
              username = data["name"];
           }
           profilePicture = data["profile_picture"];
+          // Fallback values in case merchant profile is missing
+          _namaBisnis = data["nama_bisnis"] ?? '';
+          _deskripsi = data["deskripsi"] ?? '';
         }
 
         final merchantRes = await merchantService.getAllMerchants();
@@ -101,11 +109,19 @@ class _MerchantProfilePageState extends State<MerchantProfilePage> {
             orElse: () => null,
           );
           if (myMerchant != null) {
+            _namaBisnis = myMerchant["nama_bisnis"] ?? '';
             _deskripsi = myMerchant["deskripsi"] ?? '';
             _usahaDidirikan = myMerchant["usaha_didirikan"]?.toString();
             _jamBuka = myMerchant["jam_buka"]?.toString();
             _jamTutup = myMerchant["jam_tutup"]?.toString();
             _imageUrl = myMerchant["image_url"]?.toString();
+            
+            if (myMerchant["latitude"] != null) {
+              _latitude = double.tryParse(myMerchant["latitude"].toString());
+            }
+            if (myMerchant["longitude"] != null) {
+              _longitude = double.tryParse(myMerchant["longitude"].toString());
+            }
           }
         }
       } catch (_) {}
@@ -116,7 +132,7 @@ class _MerchantProfilePageState extends State<MerchantProfilePage> {
 
   int _calculateCompleteness() {
     int filled = 0;
-    if (username.isNotEmpty && username != 'Nama Merchant') filled++;
+    if (_namaBisnis.isNotEmpty && _namaBisnis != 'Nama Merchant') filled++;
     if (_usahaDidirikan != null && _usahaDidirikan!.isNotEmpty) filled++;
     if (_jamBuka != null && _jamBuka!.isNotEmpty) filled++;
     if (_jamTutup != null && _jamTutup!.isNotEmpty) filled++;
@@ -171,8 +187,23 @@ class _MerchantProfilePageState extends State<MerchantProfilePage> {
                   icon: Icons.location_on_outlined,
                   iconColor: Colors.blueAccent,
                   title: 'Lokasi Pinpoint',
-                  subtitle: 'Jl. Sudirman',
-                  onTap: () {},
+                  subtitle: (_latitude != null && _longitude != null) 
+                      ? '${_latitude!.toStringAsFixed(5)}, ${_longitude!.toStringAsFixed(5)}' 
+                      : 'Belum diatur',
+                  onTap: () async {
+                    final initialLoc = (_latitude != null && _longitude != null) 
+                        ? LatLng(_latitude!, _longitude!) 
+                        : null;
+                    final result = await Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => MerchantUpdateLocationPage(initialLocation: initialLoc),
+                      ),
+                    );
+                    if (result == true) {
+                      _loadUser();
+                    }
+                  },
                 ),
                 const SizedBox(height: 24),
                 Text(
@@ -256,10 +287,10 @@ class _MerchantProfilePageState extends State<MerchantProfilePage> {
                     width: 2,
                   ),
                 ),
-                child: profilePicture != null
+                child: (_imageUrl != null && _imageUrl!.isNotEmpty) || (profilePicture != null && profilePicture!.isNotEmpty)
                     ? ClipOval(
                         child: Image.network(
-                          profilePicture!,
+                          (_imageUrl != null && _imageUrl!.isNotEmpty) ? _imageUrl! : profilePicture!,
                           fit: BoxFit.cover,
                           width: 60,
                           height: 60,
@@ -302,13 +333,6 @@ class _MerchantProfilePageState extends State<MerchantProfilePage> {
                       overflow: TextOverflow.ellipsis,
                     ),
                   ],
-                ),
-              ),
-              IconButton(
-                onPressed: () {},
-                icon: const Icon(
-                  Icons.edit_square,
-                  color: Colors.white,
                 ),
               ),
             ],

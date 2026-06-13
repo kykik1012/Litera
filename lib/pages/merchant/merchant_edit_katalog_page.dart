@@ -6,6 +6,7 @@ import '../../models/product.dart';
 import '../../services/product_service.dart';
 import '../../services/merchant_service.dart';
 import '../../helpers/shared_pref_helper.dart';
+import 'merchant_edit_produk_page.dart';
 
 class MerchantEditKatalogPage extends StatefulWidget {
   const MerchantEditKatalogPage({super.key});
@@ -57,7 +58,7 @@ class _MerchantEditKatalogPageState extends State<MerchantEditKatalogPage> {
         if (_namaBisnis.isNotEmpty) {
           _products = allProducts.where((p) => p.namaBisnis == _namaBisnis).toList();
         } else {
-          _products = allProducts;
+          _products = [];
         }
       }
     } catch (e) {
@@ -117,8 +118,8 @@ class _MerchantEditKatalogPageState extends State<MerchantEditKatalogPage> {
         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Status produk diperbarui')));
         _loadData();
       } else {
-        // Mock fallback if API not ready
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('API update status mungkin belum tersedia')));
+        final msg = res["message"] ?? 'Gagal update status';
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
       }
     } catch (e) {
       if (!mounted) return;
@@ -201,7 +202,7 @@ class _MerchantEditKatalogPageState extends State<MerchantEditKatalogPage> {
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: isAvailable ? Colors.white : Colors.grey[100],
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: Colors.grey.shade200),
         boxShadow: [
@@ -284,7 +285,7 @@ class _MerchantEditKatalogPageState extends State<MerchantEditKatalogPage> {
                               borderRadius: BorderRadius.circular(6),
                             ),
                             child: Text(
-                              isAvailable ? 'Tersedia' : 'Kosong',
+                              isAvailable ? 'Tersedia' : 'Habis',
                               style: GoogleFonts.poppins(
                                 fontSize: 10,
                                 fontWeight: FontWeight.w600,
@@ -317,9 +318,16 @@ class _MerchantEditKatalogPageState extends State<MerchantEditKatalogPage> {
                 SizedBox(
                   height: 32,
                   child: ElevatedButton(
-                    onPressed: () {
-                      // TODO: Navigate to Edit Product Form
-                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Fitur edit detail produk segera hadir')));
+                    onPressed: () async {
+                      final result = await Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => MerchantEditProdukPage(product: product),
+                        ),
+                      );
+                      if (result == true) {
+                        _loadData();
+                      }
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: limeGreen,
