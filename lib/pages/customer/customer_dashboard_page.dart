@@ -10,6 +10,8 @@ import 'package:litera/models/thematic_route.dart';
 import '../../services/merchant_service.dart';
 import '../../services/thematic_service.dart';
 import '../../services/product_service.dart';
+import '../../services/user_service.dart';
+import '../../constants/api.dart';
 import 'customer_route_preview_page.dart';
 import 'customer_merchant_detail_page.dart';
 
@@ -28,6 +30,7 @@ class _CustomerDashboardPageState extends State<CustomerDashboardPage> {
   final TextEditingController _searchController = TextEditingController();
 
   String _username = "Customer";
+  String? _profilePicture;
   LatLng? _currentLocation;
   List<MerchantModel> _merchants = [];
   List<MerchantModel> _filteredMerchants = [];
@@ -55,9 +58,18 @@ class _CustomerDashboardPageState extends State<CustomerDashboardPage> {
 
   Future<void> _initData() async {
     final name = await SharedPrefHelper.getUsername();
+    final userId = await SharedPrefHelper.getUserId() ?? 0;
     await _getUserLocation();
 
     try {
+      if (userId != 0) {
+        final userService = UserService();
+        final userRes = await userService.getUserById(userId);
+        if (userRes["success"] == true) {
+          _profilePicture = userRes["data"]["profile_picture"];
+        }
+      }
+      
       final merchantRes = await _merchantService.getAllMerchants();
       final routeRes = await _routeService.getAllThematicRoutes();
       final productRes = await _productService.getAllProducts();
@@ -162,12 +174,19 @@ class _CustomerDashboardPageState extends State<CustomerDashboardPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
-                FloatingActionButton.extended(
+                ElevatedButton.icon(
                   onPressed: _recenterMap,
-                  backgroundColor: Colors.white,
-                  foregroundColor: const Color(0xFF003D33),
-                  icon: const Icon(Icons.my_location),
-                  label: const Text("Pusatkan kembali", style: TextStyle(fontWeight: FontWeight.bold)),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.white,
+                    foregroundColor: const Color(0xFF003D33),
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(30),
+                    ),
+                    elevation: 4,
+                  ),
+                  icon: const Icon(Icons.my_location, size: 18),
+                  label: const Text("Pusatkan kembali", style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
                 ),
                 const SizedBox(height: 16),
                 if (_selectedMerchant != null)
@@ -287,10 +306,15 @@ class _CustomerDashboardPageState extends State<CustomerDashboardPage> {
           ),
           child: Row(
             children: [
-              const CircleAvatar(
+              CircleAvatar(
                 radius: 24,
-                backgroundColor: Color(0xFFAEEA00),
-                child: Icon(Icons.person, color: Color(0xFF003D33), size: 30),
+                backgroundColor: const Color(0xFFAEEA00),
+                backgroundImage: _profilePicture != null 
+                    ? NetworkImage(Api.getImageUrl(_profilePicture))
+                    : null,
+                child: _profilePicture == null 
+                    ? const Icon(Icons.person, color: Color(0xFF003D33), size: 30)
+                    : null,
               ),
               const SizedBox(width: 12),
               Expanded(

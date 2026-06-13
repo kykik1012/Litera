@@ -7,6 +7,10 @@ import '../../services/merchant_service.dart';
 import '../auth/login_page.dart';
 import '../../widgets/logout_bottom_sheet.dart';
 import '../merchant/merchant_edit_profil_usaha_page.dart';
+import '../merchant/merchant_change_password_page.dart';
+import '../../helpers/secure_storage_helper.dart';
+import '../../services/biometric_service.dart';
+import '../../services/auth_service.dart';
 
 class MerchantProfilePage extends StatefulWidget {
   const MerchantProfilePage({super.key});
@@ -27,6 +31,7 @@ class _MerchantProfilePageState extends State<MerchantProfilePage> {
   String? _jamBuka;
   String? _jamTutup;
   String? _imageUrl;
+  bool biometricEnabled = false;
 
   final userService = UserService();
   final merchantService = MerchantService();
@@ -35,6 +40,39 @@ class _MerchantProfilePageState extends State<MerchantProfilePage> {
   void initState() {
     super.initState();
     _loadUser();
+    loadBiometricStatus();
+  }
+
+  Future<void> loadBiometricStatus() async {
+    biometricEnabled = await SecureStorageHelper.isBiometricEnabled();
+    if (mounted) setState(() {});
+  }
+
+  Future<void> toggleBiometric(bool value) async {
+    final userId = await SharedPrefHelper.getUserId();
+    if (value) {
+      final available = await BiometricService().isAvailable();
+      if (!available) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Perangkat tidak mendukung biometrik")));
+        return;
+      }
+      final success = await BiometricService().authenticate();
+      if (!success) return;
+
+      final role = await SharedPrefHelper.getRole();
+      final token = await SharedPrefHelper.getToken();
+      final usernameStr = await SharedPrefHelper.getUsername();
+      final emailStr = await SharedPrefHelper.getEmail();
+
+      await AuthService().updateBiometricStatus(userId: userId ?? 0, biometricEnabled: true);
+      await SecureStorageHelper.saveBiometricEnabled(enabled: true, userId: userId ?? 0, role: role ?? 1);
+      await SecureStorageHelper.saveBiometricUserData(token: token ?? "", userId: userId ?? 0, username: usernameStr ?? "", email: emailStr ?? "", role: role ?? 1);
+    } else {
+      await AuthService().updateBiometricStatus(userId: userId ?? 0, biometricEnabled: false);
+      await SecureStorageHelper.removeBiometric();
+    }
+    if (mounted) setState(() { biometricEnabled = value; });
   }
 
   Future<void> _loadUser() async {
@@ -151,7 +189,9 @@ class _MerchantProfilePageState extends State<MerchantProfilePage> {
                   iconColor: Colors.grey[700]!,
                   title: 'Keamanan Akun',
                   subtitle: 'Password & Akun',
-                  onTap: () {},
+                  onTap: () {
+                    Navigator.push(context, MaterialPageRoute(builder: (_) => const MerchantChangePasswordPage()));
+                  },
                 ),
                 const SizedBox(height: 12),
                 _buildActionCard(
@@ -159,7 +199,14 @@ class _MerchantProfilePageState extends State<MerchantProfilePage> {
                   iconColor: Colors.grey[700]!,
                   title: 'Sidik Jari',
                   subtitle: 'Pengaturan Sidik Jari',
-                  onTap: () {},
+                  trailingWidget: Switch(
+                    value: biometricEnabled,
+                    onChanged: toggleBiometric,
+                    activeColor: tealDark,
+                  ),
+                  onTap: () {
+                    toggleBiometric(!biometricEnabled);
+                  },
                 ),
                 const SizedBox(height: 12),
                 _buildActionCard(
@@ -398,6 +445,7 @@ class _MerchantProfilePageState extends State<MerchantProfilePage> {
     Color? subtitleColor,
     Color? backgroundColor,
     required VoidCallback onTap,
+    Widget? trailingWidget,
   }) {
     return InkWell(
       onTap: onTap,
@@ -445,7 +493,7 @@ class _MerchantProfilePageState extends State<MerchantProfilePage> {
                 ],
               ),
             ),
-            Icon(Icons.chevron_right, color: titleColor ?? Colors.grey[400]),
+            trailingWidget ?? Icon(Icons.chevron_right, color: titleColor ?? Colors.grey[400]),
           ],
         ),
       ),

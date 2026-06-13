@@ -7,6 +7,9 @@ import '../../services/auth_service.dart';
 
 import '../../main_screen.dart';
 import 'register_page.dart';
+import '../../helpers/secure_storage_helper.dart';
+import '../../services/biometric_service.dart';
+import 'forgot_password_page.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -22,6 +25,7 @@ class _LoginPageState extends State<LoginPage> {
 
   bool isLoading = false;
   bool _isPasswordHidden = true;
+  bool biometricAvailable = false;
 
   // Focus nodes to track active field
   final _usernameFocus = FocusNode();
@@ -32,6 +36,39 @@ class _LoginPageState extends State<LoginPage> {
     super.initState();
     _usernameFocus.addListener(() => setState(() {}));
     _passwordFocus.addListener(() => setState(() {}));
+    checkBiometric();
+  }
+
+  Future<void> checkBiometric() async {
+    biometricAvailable = await SecureStorageHelper.isBiometricEnabled();
+    if (mounted) setState(() {});
+  }
+
+  Future<void> loginWithBiometric() async {
+    final enabled = await SecureStorageHelper.isBiometricEnabled();
+    if (!enabled) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Login sidik jari belum diaktifkan")));
+      return;
+    }
+    final success = await BiometricService().authenticate();
+    if (!success) return;
+
+    final token = await SecureStorageHelper.getBiometricToken();
+    final userId = int.parse(await SecureStorageHelper.getBiometricUserId() ?? "0");
+    final username = await SecureStorageHelper.getBiometricUsername();
+    final email = await SecureStorageHelper.getBiometricEmail();
+    final role = int.parse(await SecureStorageHelper.getBiometricRole() ?? "2");
+
+    await SharedPrefHelper.saveUserData(
+      token: token ?? "",
+      id: userId,
+      username: username ?? "",
+      email: email ?? "",
+      role: role,
+    );
+
+    if (!mounted) return;
+    Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const MainScreen()));
   }
 
   @override
@@ -283,7 +320,7 @@ class _LoginPageState extends State<LoginPage> {
                           alignment: Alignment.centerRight,
                           child: TextButton(
                             onPressed: () {
-                              // TODO: navigate to forget password
+                              Navigator.push(context, MaterialPageRoute(builder: (_) => const ForgotPasswordPage()));
                             },
                             style: TextButton.styleFrom(
                               padding: EdgeInsets.zero,
@@ -340,6 +377,32 @@ class _LoginPageState extends State<LoginPage> {
                         ),
 
                         const SizedBox(height: 20),
+
+                        if (biometricAvailable) ...[
+                          SizedBox(
+                            width: double.infinity,
+                            height: 52,
+                            child: OutlinedButton.icon(
+                              onPressed: isLoading ? null : loginWithBiometric,
+                              icon: const Icon(Icons.fingerprint, color: tealColor),
+                              label: Text(
+                                'Login dengan Sidik Jari',
+                                style: GoogleFonts.poppins(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w600,
+                                  color: tealColor,
+                                ),
+                              ),
+                              style: OutlinedButton.styleFrom(
+                                side: const BorderSide(color: tealColor, width: 2),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(30),
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 20),
+                        ],
 
                         // Register link
                         Center(

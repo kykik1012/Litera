@@ -4,6 +4,8 @@ import 'package:http/http.dart'
     as http;
 
 import '../constants/api.dart';
+import '../helpers/api_helper.dart';
+import '../helpers/shared_pref_helper.dart';
 
 class AuthService {
 
@@ -140,6 +142,78 @@ class AuthService {
         "email": email,
 
         "otp": otp,
+
+        "new_password":
+            newPassword,
+      }),
+    );
+
+    return jsonDecode(
+      response.body,
+    );
+  }
+
+  Future<Map<String, dynamic>>updateBiometricStatus({
+
+    required int userId,
+
+    required bool biometricEnabled,
+
+  }) async {
+
+    final headers =
+        await ApiHelper.authHeaders();
+
+    final response =
+        await http.put(
+
+      Uri.parse(
+        "${Api.baseUrl}/auth/biometric/$userId",
+      ),
+
+      headers: headers,
+
+      body: jsonEncode({
+
+        "biometric_enabled":
+            biometricEnabled,
+      }),
+    );
+
+    return jsonDecode(
+      response.body,
+    );
+  }
+
+  Future<Map<String, dynamic>> changePassword({
+    required int userId,
+    required String oldPassword,
+    required String newPassword,
+  }) async {
+
+    final token =
+        await SharedPrefHelper.getToken();
+
+    final response =
+        await http.put(
+
+      Uri.parse(
+        "${Api.baseUrl}/auth/change-password/$userId",
+      ),
+
+      headers: {
+
+        "Content-Type":
+            "application/json",
+
+        "Authorization":
+            "Bearer $token",
+      },
+
+      body: jsonEncode({
+
+        "old_password":
+            oldPassword,
 
         "new_password":
             newPassword,

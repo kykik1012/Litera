@@ -81,30 +81,6 @@ class _MerchantUsahaPageState extends State<MerchantUsahaPage> {
         }
       }
 
-      // 2. Ambil Nama Bisnis & Deskripsi dari MerchantService (Prioritas Utama)
-      final merchantRes = await _merchantService.getAllMerchants();
-      if (merchantRes['success'] == true) {
-        final List<dynamic> mList = merchantRes['data'];
-        final myMerchant = mList.firstWhere(
-          (m) => m['user_id'].toString() == userId.toString(),
-          orElse: () => null,
-        );
-
-        if (myMerchant != null) {
-          if (myMerchant['nama_bisnis'] != null && myMerchant['nama_bisnis'].toString().isNotEmpty) {
-             _namaBisnis = myMerchant['nama_bisnis'].toString();
-          }
-          if (myMerchant['deskripsi'] != null) {
-             _deskripsi = myMerchant['deskripsi'].toString();
-          }
-          
-          if (myMerchant['profile_picture'] != null && myMerchant['profile_picture'].toString().isNotEmpty) {
-             _profilePicture = myMerchant['profile_picture'].toString();
-          } else if (myMerchant['image_url'] != null && myMerchant['image_url'].toString().isNotEmpty) {
-             _profilePicture = myMerchant['image_url'].toString();
-          }
-        }
-      }
     } catch (e) {
       debugPrint("Error loading merchant profile: $e");
     }

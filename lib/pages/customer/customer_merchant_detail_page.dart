@@ -197,7 +197,12 @@ class _CustomerMerchantDetailPageState extends State<CustomerMerchantDetailPage>
     // ========================================================
     String tanggalBerdiri = "Tidak diketahui";
     if (widget.merchant.usahaDidirikan != null) {
-      tanggalBerdiri = DateFormat('dd MMMM yyyy', 'id_ID').format(widget.merchant.usahaDidirikan!);
+      final parsedDate = DateTime.tryParse(widget.merchant.usahaDidirikan!);
+      if (parsedDate != null) {
+        tanggalBerdiri = parsedDate.year.toString();
+      } else {
+        tanggalBerdiri = widget.merchant.usahaDidirikan!;
+      }
     }
 
     return Stack(
@@ -229,7 +234,7 @@ class _CustomerMerchantDetailPageState extends State<CustomerMerchantDetailPage>
               ),
               const SizedBox(height: 4),
               Text(
-                "Berdiri sejak tahun: ${(widget.merchant.usahaDidirikan != null) ? (DateTime.tryParse(widget.merchant.usahaDidirikan!)?.year?.toString() ?? widget.merchant.usahaDidirikan!) : 'Tidak diketahui'}",
+                "Berdiri sejak tahun: $tanggalBerdiri",
                 style: TextStyle(color: limeGreen, fontSize: 13, fontWeight: FontWeight.w500),
               ),
               const Divider(color: Colors.white24, height: 20),

@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:http/http.dart' as http;
 
@@ -94,7 +95,8 @@ class UserService {
   uploadProfilePicture({
 
     required int id,
-    required File image,
+    required Uint8List imageBytes,
+    String? imageFileName,
 
   }) async {
 
@@ -119,13 +121,10 @@ class UserService {
     });
 
     request.files.add(
-
-      await http.MultipartFile
-          .fromPath(
-
+      http.MultipartFile.fromBytes(
         "profile_picture",
-
-        image.path,
+        imageBytes,
+        filename: imageFileName ?? "profile.jpg",
       ),
     );
 
@@ -171,5 +170,38 @@ class UserService {
     );
 
     return jsonDecode(response.body);
+  }
+
+  Future<Map<String, dynamic>> updateProfile({
+    required int id,
+    String? name,
+    Uint8List? imageBytes,
+    String? imageFileName,
+  }) async {
+    final token = await SharedPrefHelper.getToken();
+    final request = http.MultipartRequest(
+      "PUT",
+      Uri.parse("${Api.baseUrl}/users/profile/$id"),
+    );
+    request.headers["Authorization"] = "Bearer $token";
+
+    if (name != null && name.trim().isNotEmpty) {
+      request.fields["name"] = name.trim();
+    }
+
+    if (imageBytes != null) {
+      request.files.add(
+        http.MultipartFile.fromBytes(
+          "profile_picture",
+          imageBytes,
+          filename: imageFileName ?? "profile.jpg",
+        ),
+      );
+    }
+
+    final streamedResponse = await request.send();
+    final response = await http.Response.fromStream(streamedResponse);
+    final data = jsonDecode(response.body);
+    return data;
   }
 }

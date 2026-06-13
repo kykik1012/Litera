@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -6,6 +7,8 @@ import 'package:image_picker/image_picker.dart';
 
 import '../../helpers/shared_pref_helper.dart';
 import '../../services/user_service.dart';
+import '../../services/auth_service.dart';
+import '../../constants/api.dart';
 
 class EditProfilePage extends StatefulWidget {
   const EditProfilePage({super.key});
@@ -21,14 +24,19 @@ class _EditProfilePageState extends State<EditProfilePage> {
   bool isSaving = false;
 
   int userId = 0;
+  int role = 2;
 
   File? selectedImage;
+  Uint8List? selectedImageBytes;
+
   String? profilePicture;
 
   final nameController = TextEditingController();
+  final oldPasswordController = TextEditingController();
   final passwordController = TextEditingController();
   final confirmPasswordController = TextEditingController();
 
+  bool _isOldPasswordHidden = true;
   bool _isPasswordHidden = true;
   bool _isConfirmPasswordHidden = true;
 
@@ -47,13 +55,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
       final data = response["data"];
       profilePicture = data["profile_picture"];
 
-      if (role == 2) {
-        nameController.text = data["name"] ?? "";
-      } else {
-        namaBisnisController.text = data["nama_bisnis"] ?? "";
-        deskripsiController.text = data["deskripsi"] ?? "";
-        tahunController.text = data["usaha_didirikan"]?.toString() ?? "";
-      }
+      nameController.text = data["name"] ?? "";
     }
 
     setState(() {
@@ -65,18 +67,27 @@ class _EditProfilePageState extends State<EditProfilePage> {
     final picker = ImagePicker();
     final image = await picker.pickImage(source: ImageSource.gallery);
     if (image == null) return;
+    
+    final bytes = await image.readAsBytes();
     setState(() {
       selectedImage = File(image.path);
+      selectedImageBytes = bytes;
     });
   }
 
   Future<void> saveProfile() async {
-    // Validasi konfirmasi password
-    if (passwordController.text.isNotEmpty || confirmPasswordController.text.isNotEmpty) {
+    // Validasi password
+    if (oldPasswordController.text.isNotEmpty || passwordController.text.isNotEmpty || confirmPasswordController.text.isNotEmpty) {
+      if (oldPasswordController.text.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Kata sandi lama harus diisi")));
+        return;
+      }
+      if (passwordController.text.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Kata sandi baru harus diisi")));
+        return;
+      }
       if (passwordController.text != confirmPasswordController.text) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Konfirmasi password tidak sesuai")),
-        );
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Konfirmasi kata sandi tidak sesuai")));
         return;
       }
     }
@@ -84,27 +95,27 @@ class _EditProfilePageState extends State<EditProfilePage> {
     setState(() => isSaving = true);
 
     try {
-      if (selectedImage != null) {
-        await userService.uploadProfilePicture(
-          id: userId,
-          image: selectedImage!,
-        );
-      }
+      Map<String, dynamic> response = await userService.updateProfile(
+        id: userId,
+        name: nameController.text,
+        imageBytes: selectedImageBytes,
+        imageFileName: selectedImage?.path.split('/').last ?? 'profile.jpg',
+      );
 
-      Map<String, dynamic> response;
-
-      if (role == 2) {
-        response = await userService.updateCustomer(
-          id: userId,
-          name: nameController.text,
+      // Change Password if filled
+      if (oldPasswordController.text.isNotEmpty && passwordController.text.isNotEmpty) {
+        final passResponse = await AuthService().changePassword(
+          userId: userId,
+          oldPassword: oldPasswordController.text,
+          newPassword: passwordController.text,
         );
-      } else {
-        response = await userService.updateMerchant(
-          id: userId,
-          namaBisnis: namaBisnisController.text,
-          deskripsi: deskripsiController.text,
-          usahaDidirikan: tahunController.text,
-        );
+        
+        if (passResponse["success"] != true) {
+          if (!mounted) return;
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(passResponse["message"])));
+          setState(() => isSaving = false);
+          return;
+        }
       }
 
       if (!mounted) return;
@@ -129,6 +140,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
   @override
   void dispose() {
     nameController.dispose();
+    oldPasswordController.dispose();
     passwordController.dispose();
     confirmPasswordController.dispose();
     super.dispose();
@@ -230,11 +242,11 @@ class _EditProfilePageState extends State<EditProfilePage> {
                                 border: Border.all(color: const Color(0xFFB8E0DB), width: 2),
                               ),
                               child: ClipOval(
-                                child: selectedImage != null
-                                    ? Image.file(selectedImage!, fit: BoxFit.cover, width: 90, height: 90)
+                                child: selectedImageBytes != null
+                                    ? Image.memory(selectedImageBytes!, fit: BoxFit.cover, width: 90, height: 90)
                                     : profilePicture != null
                                         ? Image.network(
-                                            profilePicture!, fit: BoxFit.cover, width: 90, height: 90,
+                                            Api.getImageUrl(profilePicture), fit: BoxFit.cover, width: 90, height: 90,
                                             errorBuilder: (_, __, ___) => const Icon(Icons.person, size: 44, color: Color(0xFF145C54)),
                                           )
                                         : const Icon(Icons.person, size: 44, color: Color(0xFF145C54)),
@@ -260,6 +272,27 @@ class _EditProfilePageState extends State<EditProfilePage> {
                       controller: nameController,
                       hintText: 'Masukkan nama lengkap',
                       suffixIcon: const Icon(Icons.person_outline, color: inputHintColor, size: 22),
+                      darkText: darkText,
+                      inputHintColor: inputHintColor,
+                      underlineColor: underlineColor,
+                      tealColor: tealColor,
+                      subtitleColor: subtitleColor,
+                    ),
+                    const SizedBox(height: 20),
+
+                    // Kata Sandi Lama field
+                    _buildLabeledField(
+                      label: 'Kata Sandi Lama',
+                      controller: oldPasswordController,
+                      hintText: 'Masukkan kata sandi lama (Opsional)',
+                      obscureText: _isOldPasswordHidden,
+                      suffixIcon: GestureDetector(
+                        onTap: () => setState(() => _isOldPasswordHidden = !_isOldPasswordHidden),
+                        child: Icon(
+                          _isOldPasswordHidden ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                          color: inputHintColor, size: 22,
+                        ),
+                      ),
                       darkText: darkText,
                       inputHintColor: inputHintColor,
                       underlineColor: underlineColor,

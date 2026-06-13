@@ -12,9 +12,7 @@ class MerchantModel {
   final num? latitude;
   final num? longitude;
   final String status;
-  final String? profilePicture;
-  final double? latitude;
-  final double? longitude;
+
 
   MerchantModel({
     required this.id,
@@ -24,13 +22,12 @@ class MerchantModel {
     this.jamBuka,
     this.jamTutup,
     this.deskripsi,
-    this.imageUrl,
-    required this.status,
     this.profilePicture,
     this.imageUrl,
     this.imageQr,
     this.latitude,
     this.longitude,
+    required this.status,
   });
 
   factory MerchantModel.fromJson(Map<String, dynamic> json) {

@@ -38,6 +38,9 @@ class _MerchantEditProfilUsahaPageState extends State<MerchantEditProfilUsahaPag
   Uint8List? _bannerBytes;
   XFile? _profileImage;
   File? _profileFile;
+  Uint8List? _profileBytes;
+  XFile? _qrImage;
+  Uint8List? _qrBytes;
 
   // Controllers
   final TextEditingController _namaController = TextEditingController();
@@ -47,9 +50,6 @@ class _MerchantEditProfilUsahaPageState extends State<MerchantEditProfilUsahaPag
   final TextEditingController _bulanController = TextEditingController();
   final TextEditingController _tahunController = TextEditingController();
   final TextEditingController _deskripsiController = TextEditingController();
-
-  final List<String> _hariList = ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu', 'Selalu'];
-  final List<String> _selectedHari = ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
 
   static const Color tealDark = Color(0xFF0D3B2E);
   static const Color limeGreen = Color(0xFFAEEA00);
@@ -204,13 +204,30 @@ class _MerchantEditProfilUsahaPageState extends State<MerchantEditProfilUsahaPag
     try {
       final picked = await _picker.pickImage(source: ImageSource.gallery, imageQuality: 80);
       if (picked != null) {
+        final bytes = await picked.readAsBytes();
         setState(() {
           _profileImage = picked;
           _profileFile = File(picked.path);
+          _profileBytes = bytes;
         });
       }
     } catch (e) {
       debugPrint("Error picking profile: $e");
+    }
+  }
+
+  Future<void> _pickQrPic() async {
+    try {
+      final picked = await _picker.pickImage(source: ImageSource.gallery, imageQuality: 80);
+      if (picked != null) {
+        final bytes = await picked.readAsBytes();
+        setState(() {
+          _qrImage = picked;
+          _qrBytes = bytes;
+        });
+      }
+    } catch (e) {
+      debugPrint("Error picking QR: $e");
     }
   }
 
@@ -232,13 +249,17 @@ class _MerchantEditProfilUsahaPageState extends State<MerchantEditProfilUsahaPag
           deskripsi: _deskripsiController.text,
           imageBytes: _bannerBytes,
           imageFileName: _bannerImage?.name,
+          qrBytes: _qrBytes,
+          qrFileName: _qrImage?.name,
        );
 
-       if (_profileFile != null) {
-          final userId = await SharedPrefHelper.getUserId();
-          if (userId != null) {
-             await _userService.uploadProfilePicture(id: userId, image: _profileFile!);
-          }
+       final userId = await SharedPrefHelper.getUserId();
+       if (_profileBytes != null && userId != null) {
+          await _userService.uploadProfilePicture(
+            id: userId, 
+            imageBytes: _profileBytes!,
+            imageFileName: _profileFile?.path.split('/').last ?? 'profile.jpg',
+          );
        }
 
        if (!mounted) return;
@@ -358,8 +379,8 @@ class _MerchantEditProfilUsahaPageState extends State<MerchantEditProfilUsahaPag
                       shape: BoxShape.circle,
                       border: Border.all(color: Colors.white, width: 3),
                     ),
-                    child: _profileFile != null
-                        ? ClipOval(child: Image.file(_profileFile!, fit: BoxFit.cover))
+                    child: _profileBytes != null
+                        ? ClipOval(child: Image.memory(_profileBytes!, fit: BoxFit.cover))
                         : _merchant?.profilePicture != null
                             ? ClipOval(child: Image.network(_merchant!.profilePicture!, fit: BoxFit.cover))
                             : const Icon(Icons.storefront, color: tealDark, size: 36),
@@ -488,30 +509,6 @@ class _MerchantEditProfilUsahaPageState extends State<MerchantEditProfilUsahaPag
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Hari', style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w600)),
-              const SizedBox(height: 8),
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: _hariList.map((hari) {
-                  final isSelected = _selectedHari.contains(hari);
-                  return ChoiceChip(
-                    label: Text(hari, style: GoogleFonts.poppins(fontSize: 11, fontWeight: FontWeight.w500, color: tealDark)),
-                    selected: isSelected,
-                    onSelected: (val) {
-                      setState(() {
-                        if (val) _selectedHari.add(hari);
-                        else _selectedHari.remove(hari);
-                      });
-                    },
-                    selectedColor: limeGreen,
-                    backgroundColor: Colors.grey[100],
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                    side: BorderSide.none,
-                  );
-                }).toList(),
-              ),
-              const SizedBox(height: 16),
               Row(
                 children: [
                   Expanded(
@@ -643,6 +640,42 @@ class _MerchantEditProfilUsahaPageState extends State<MerchantEditProfilUsahaPag
               border: InputBorder.none,
               contentPadding: EdgeInsets.all(16),
             ),
+          ),
+        ),
+        const SizedBox(height: 24),
+        Text('Image QR / Gambar QRIS', style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.bold)),
+        const SizedBox(height: 12),
+        GestureDetector(
+          onTap: _pickQrPic,
+          child: Container(
+            width: double.infinity,
+            height: 160,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: Colors.grey[300]!),
+            ),
+            child: _qrBytes != null
+                ? ClipRRect(
+                    borderRadius: BorderRadius.circular(12),
+                    child: Image.memory(_qrBytes!, fit: BoxFit.contain),
+                  )
+                : (_merchant?.imageQr != null && _merchant!.imageQr!.isNotEmpty)
+                    ? ClipRRect(
+                        borderRadius: BorderRadius.circular(12),
+                        child: Image.network(_merchant!.imageQr!, fit: BoxFit.contain),
+                      )
+                    : Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.qr_code_scanner, size: 40, color: Colors.grey[400]),
+                          const SizedBox(height: 8),
+                          Text(
+                            "Ketuk untuk unggah QRIS",
+                            style: GoogleFonts.poppins(color: Colors.grey[500], fontSize: 12),
+                          ),
+                        ],
+                      ),
           ),
         ),
         const SizedBox(height: 24),

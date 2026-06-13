@@ -54,6 +54,8 @@ class MerchantService {
     required String deskripsi,
     Uint8List? imageBytes,
     String? imageFileName,
+    Uint8List? qrBytes,
+    String? qrFileName,
   }) async {
     final token = await SharedPrefHelper.getToken();
     final request = http.MultipartRequest(
@@ -77,6 +79,16 @@ class MerchantService {
           "image_url",
           imageBytes,
           filename: imageFileName,
+        ),
+      );
+    }
+
+    if (qrBytes != null && qrFileName != null) {
+      request.files.add(
+        http.MultipartFile.fromBytes(
+          "image_qr",
+          qrBytes,
+          filename: qrFileName,
         ),
       );
     }

@@ -156,14 +156,14 @@ class _MerchantEditProfilePageState extends State<MerchantEditProfilePage> {
       String formatTime(TimeOfDay time) => '${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}:00';
 
       final response = await _merchantService.updateMerchantInformation(
-        id: merchantId,
+        id: int.parse(merchantId),
         namaBisnis: namaBisnisController.text,
         deskripsi: deskripsiController.text,
         usahaDidirikan: formattedDate,
         jamBuka: formatTime(selectedJamBuka!),
         jamTutup: formatTime(selectedJamTutup!),
-        imageProfile: selectedImageProfile,
-        imageQr: selectedImageQr,
+        imageBytes: selectedImageProfile != null ? await selectedImageProfile!.readAsBytes() : null,
+        imageFileName: selectedImageProfile != null ? selectedImageProfile!.path.split('/').last : null,
       );
 
       if (!mounted) return;
