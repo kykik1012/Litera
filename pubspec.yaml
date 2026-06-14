@@ -48,6 +48,7 @@ dependencies:
   local_auth: ^3.0.1
   qr_flutter: ^4.1.0
   mobile_scanner: ^7.2.0
+  flutter_launcher_icons: ^0.13.1
 
 dev_dependencies:
   flutter_test:
@@ -112,3 +113,7 @@ flutter:
   #
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/to/font-from-package
+flutter_launcher_icons:
+  android: "launcher_icon"
+  ios: true
+  image_path: "assets/images/icon_litera.png"

@@ -63,39 +63,75 @@ class ThematicRouteService {
     return jsonDecode(body);
   }
 
-  // Ubah Rute dengan Gambar (PUT / POST Method Spoofing)
+  // Ubah Rute dengan Gambar (PUT Multipart, dengan fallback POST+_method)
   Future<Map<String, dynamic>> updateThematicRoute(
     String id, 
     String judul, 
     num panjang, 
     String deskripsi,
-    {Uint8List? imageBytes, String? imageFileName} // Tambahan parameter gambar
+    {Uint8List? imageBytes, String? imageFileName}
   ) async {
-    final headers = await ApiHelper.authHeaders();
-    
-    // Hapus header JSON
-    headers.remove('Content-Type');
-    headers.remove('content-type'); 
+    // Coba PUT langsung terlebih dahulu
+    var result = await _sendUpdateRequest(
+      id, judul, panjang, deskripsi,
+      method: "PUT",
+      imageBytes: imageBytes,
+      imageFileName: imageFileName,
+    );
 
-    // Gunakan POST, tapi beri tahu server bahwa ini sebenarnya adalah aksi PUT (Update)
+    // Jika server mengembalikan HTML (PUT multipart tidak didukung), 
+    // fallback ke POST + _method=PUT (Laravel method spoofing)
+    if (result['_isHtml'] == true) {
+      print("PUT multipart gagal, mencoba POST + _method=PUT...");
+      result = await _sendUpdateRequest(
+        id, judul, panjang, deskripsi,
+        method: "POST",
+        useMethodSpoofing: true,
+        imageBytes: imageBytes,
+        imageFileName: imageFileName,
+      );
+    }
+
+    // Bersihkan flag internal sebelum return
+    result.remove('_isHtml');
+    return result;
+  }
+
+  /// Helper internal untuk mengirim request update
+  Future<Map<String, dynamic>> _sendUpdateRequest(
+    String id,
+    String judul,
+    num panjang,
+    String deskripsi, {
+    required String method,
+    bool useMethodSpoofing = false,
+    Uint8List? imageBytes,
+    String? imageFileName,
+  }) async {
+    final headers = await ApiHelper.authHeaders();
+    headers.remove('Content-Type');
+    headers.remove('content-type');
+
     final request = http.MultipartRequest(
-      "POST",
+      method,
       Uri.parse("${Api.baseUrl}/thematic-routes/$id"),
     );
 
     request.headers.addAll(headers);
-    
-    // Data form teks
-    request.fields['_method'] = 'PUT'; // WAJIB ada agar server menganggap ini PUT
+
+    // Jika menggunakan method spoofing (Laravel)
+    if (useMethodSpoofing) {
+      request.fields['_method'] = 'PUT';
+    }
+
     request.fields['judul_rute'] = judul;
     request.fields['panjang_rute'] = panjang.toString();
     request.fields['deskripsi'] = deskripsi;
 
-    // Masukkan data gambar JIKA user mengganti fotonya
     if (imageBytes != null) {
       request.files.add(
         http.MultipartFile.fromBytes(
-          "image", // Sesuaikan dengan key di backend ('image', 'gambar', dll)
+          "image",
           imageBytes,
           filename: imageFileName ?? "updated_route_image.jpg",
         ),
@@ -104,7 +140,27 @@ class ThematicRouteService {
 
     final response = await request.send();
     final body = await response.stream.bytesToString();
-    return jsonDecode(body);
+
+    print("[$method] Update Route Status: ${response.statusCode}");
+    print("[$method] Update Route Body: ${body.length > 200 ? body.substring(0, 200) : body}");
+
+    // Cek apakah response adalah HTML (bukan JSON)
+    if (body.trimLeft().startsWith('<')) {
+      return {
+        '_isHtml': true,
+        'success': false,
+        'message': 'Server mengembalikan respons tidak valid (status: ${response.statusCode})',
+      };
+    }
+
+    try {
+      return jsonDecode(body);
+    } catch (e) {
+      return {
+        'success': false,
+        'message': 'Gagal memproses respons server: $e',
+      };
+    }
   }
 
   // Soft Delete Rute (DELETE)
