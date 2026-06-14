@@ -6,26 +6,21 @@ import '../../models/review.dart';
 import '../../services/review_service.dart';
 import 'package:litera/models/product.dart'; 
 import '../../services/product_service.dart'; 
-import 'customer_single_route_page.dart';
-import 'package:intl/intl.dart';
-import 'package:google_fonts/google_fonts.dart'; // IMPORT GOOGLE FONTS
+import 'package:google_fonts/google_fonts.dart'; // IMPORT GOOGLE FONTS 
 
-// --- 1. TAMBAHKAN IMPORT HALAMAN FORM ULASAN ---
-import 'customer_add_review_page.dart'; 
-
-class CustomerMerchantDetailPage extends StatefulWidget {
+class MerchantPreviewProfilPage extends StatefulWidget {
   final MerchantModel merchant;
 
-  const CustomerMerchantDetailPage({
+  const MerchantPreviewProfilPage({
     super.key,
     required this.merchant,
   });
 
   @override
-  State<CustomerMerchantDetailPage> createState() => _CustomerMerchantDetailPageState();
+  State<MerchantPreviewProfilPage> createState() => _MerchantPreviewProfilPageState();
 }
 
-class _CustomerMerchantDetailPageState extends State<CustomerMerchantDetailPage> {
+class _MerchantPreviewProfilPageState extends State<MerchantPreviewProfilPage> {
   final ReviewService _reviewService = ReviewService();
   final ProductService _productService = ProductService(); 
   
@@ -194,7 +189,7 @@ class _CustomerMerchantDetailPageState extends State<CustomerMerchantDetailPage>
         children: [
           // Scrollable Body
           SingleChildScrollView(
-            padding: const EdgeInsets.only(bottom: 150), // Memberi ruang untuk bottom fixed buttons
+            padding: const EdgeInsets.only(bottom: 24),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -232,8 +227,7 @@ class _CustomerMerchantDetailPageState extends State<CustomerMerchantDetailPage>
             ),
           ),
           
-          // Fixed Bottom Buttons
-          _buildBottomFixedButtons(),
+
         ],
       ),
     );
@@ -822,62 +816,5 @@ class _CustomerMerchantDetailPageState extends State<CustomerMerchantDetailPage>
     );
   }
 
-  // --- BOTTOM FIXED BUTTONS ---
-  Widget _buildBottomFixedButtons() {
-    return Positioned(
-      bottom: 0,
-      left: 0,
-      right: 0,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-        decoration: BoxDecoration(
-          color: lightGreyBg,
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.05),
-              blurRadius: 10,
-              offset: const Offset(0, -5),
-            )
-          ],
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton.icon(
-                onPressed: () {
-                  if (widget.merchant.latitude != null && widget.merchant.longitude != null) {
-                    Navigator.push(context, MaterialPageRoute(builder: (_) => CustomerSingleRoutePage(merchant: widget.merchant)));
-                  }
-                },
-                icon: const Icon(Icons.location_on_outlined, size: 18),
-                label: Text("Kunjungi", style: GoogleFonts.poppins(fontWeight: FontWeight.bold, fontSize: 13)),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: limeGreen,
-                  foregroundColor: darkGreen,
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
-                  elevation: 0,
-                ),
-              ),
-            ),
-            const SizedBox(height: 12),
-            SizedBox(
-              width: double.infinity,
-              child: OutlinedButton(
-                onPressed: () => Navigator.pop(context),
-                style: OutlinedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
-                  side: BorderSide(color: Colors.grey.shade300),
-                ),
-                child: Text("Tutup", style: GoogleFonts.poppins(color: Colors.grey.shade600, fontWeight: FontWeight.bold, fontSize: 13)),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
+
 }

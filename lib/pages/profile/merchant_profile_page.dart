@@ -164,6 +164,7 @@ class _MerchantProfilePageState extends State<MerchantProfilePage> {
       child: Scaffold(
         backgroundColor: const Color(0xFFF8F9FA),
         body: SafeArea(
+          bottom: false,
           child: SingleChildScrollView(
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),

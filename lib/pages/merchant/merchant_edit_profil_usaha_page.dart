@@ -11,6 +11,7 @@ import '../../services/product_service.dart';
 import '../../services/review_service.dart';
 import '../../services/user_service.dart';
 import '../../helpers/shared_pref_helper.dart';
+import 'merchant_preview_profil_page.dart';
 
 class MerchantEditProfilUsahaPage extends StatefulWidget {
   const MerchantEditProfilUsahaPage({super.key});
@@ -490,7 +491,20 @@ class _MerchantEditProfilUsahaPageState extends State<MerchantEditProfilUsahaPag
           SizedBox(
             width: double.infinity,
             child: ElevatedButton(
-              onPressed: () {},
+              onPressed: () {
+                if (_merchant != null) {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => MerchantPreviewProfilPage(merchant: _merchant!),
+                    ),
+                  );
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Data merchant belum lengkap untuk di-preview.', style: TextStyle(color: Colors.white)), backgroundColor: Colors.red),
+                  );
+                }
+              },
               style: ElevatedButton.styleFrom(
                 backgroundColor: limeGreen,
                 foregroundColor: tealDark,

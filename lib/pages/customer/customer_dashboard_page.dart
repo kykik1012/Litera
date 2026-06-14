@@ -479,7 +479,7 @@ class _CustomerDashboardPageState extends State<CustomerDashboardPage> {
 
   Widget _buildRecommendedRouteSlider() {
     return SizedBox(
-      height: 160, // Diperbesar dari 135 menjadi 160 agar tidak overflow
+      height: 130, // Disesuaikan agar seukuran dengan card merchant
       child: PageView.builder(
         controller: _pageController,
         itemCount: _routes.length,

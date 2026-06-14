@@ -80,7 +80,7 @@ flutter:
     - assets/images/data_kosong.png
     - assets/images/register_success.png
     - assets/images/logout.png
-
+    - assets/images/logo_splashscreen.png
 
   # To add assets to your application, add an assets section, like this:
   # assets:

@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:device_preview/device_preview.dart'; // 1. Pastikan import ini ditambahkan
 
 import 'pages/auth/onboarding_page.dart';
+import 'pages/splash_screen_page.dart';
 
 void main() {
   runApp(
@@ -30,8 +31,8 @@ class MyApp extends StatelessWidget {
       builder: DevicePreview.appBuilder,
       locale: DevicePreview.locale(context),
 
-      // 3. Tetap menggunakan OnboardingPage sebagai halaman utama
-      home: const OnboardingPage(),
+      // 3. Menggunakan SplashScreenPage sebagai halaman utama
+      home: const SplashScreenPage(),
     );
   }
 }
