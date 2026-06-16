@@ -502,47 +502,55 @@ class _CustomerDashboardPageState extends State<CustomerDashboardPage> {
       ),
       padding: const EdgeInsets.all(12),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start, // Gambar sejajar atas
         children: [
+          // Bagian Gambar
           ClipRRect(
             borderRadius: BorderRadius.circular(12),
             child: route.imageUrl != null && route.imageUrl!.isNotEmpty
                 ? Image.network(
                     route.imageUrl!,
                     width: 100,
-                    height: 80,
+                    height: double.infinity, // Biarkan gambar mengisi tinggi card
                     fit: BoxFit.cover,
                     errorBuilder: (context, error, stackTrace) => Container(
-                      width: 100, height: 80, color: Colors.grey[300],
+                      width: 100, height: double.infinity, color: Colors.grey[300],
                       child: const Icon(Icons.broken_image, color: Colors.grey),
                     ),
                   )
                 : Container(
                     width: 100,
-                    height: 80,
+                    height: double.infinity, // Biarkan gambar mengisi tinggi card
                     color: Colors.grey[300],
                     child: const Icon(Icons.map, color: Colors.grey),
                   ),
           ),
           const SizedBox(width: 12),
+          
+          // Bagian Detail Informasi
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Text(
                   route.judulRute,
-                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
-                const SizedBox(height: 4),
-                Text(
-                  route.deskripsi,
-                  style: TextStyle(color: Colors.grey[600], fontSize: 12),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
+                const SizedBox(height: 2),
+                
+                // Gunakan Expanded untuk Deskripsi agar mengisi sisa ruang AMAN
+                Expanded(
+                  child: Text(
+                    route.deskripsi,
+                    style: TextStyle(color: Colors.grey[600], fontSize: 11),
+                    maxLines: 2, 
+                    overflow: TextOverflow.ellipsis, // Terpotong otomatis jika terlalu panjang
+                  ),
                 ),
-                const SizedBox(height: 8),
+                
+                // Bagian Jarak & Tombol (Selalu menempel di bawah)
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -569,10 +577,11 @@ class _CustomerDashboardPageState extends State<CustomerDashboardPage> {
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFFAEEA00),
                         foregroundColor: const Color(0xFF003D33),
-                        padding: const EdgeInsets.symmetric(horizontal: 16),
-                        minimumSize: const Size(0, 30),
+                        padding: const EdgeInsets.symmetric(horizontal: 14),
+                        minimumSize: const Size(0, 28),
+                        elevation: 0,
                       ),
-                      child: const Text("Lihat", style: TextStyle(fontWeight: FontWeight.bold)),
+                      child: const Text("Lihat", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
                     )
                   ],
                 )
